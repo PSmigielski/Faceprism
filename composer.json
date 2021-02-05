@@ -12,6 +12,7 @@
         "doctrine/doctrine-bundle": "^2.2",
         "doctrine/doctrine-migrations-bundle": "^3.0",
         "doctrine/orm": "^2.8",
+        "lexik/jwt-authentication-bundle": "^2.10",
         "phpdocumentor/reflection-docblock": "^5.2",
         "sensio/framework-extra-bundle": "^5.6",
         "symfony/console": "5.2.*",
@@ -22,8 +23,12 @@
         "symfony/property-info": "5.2.*",
         "symfony/proxy-manager-bridge": "5.2.*",
         "symfony/serializer": "5.2.*",
+        "symfony/twig-bundle": "5.2.*",
         "symfony/uid": "5.2.*",
-        "symfony/yaml": "5.2.*"
+        "symfony/webpack-encore-bundle": "^1.9",
+        "symfony/yaml": "5.2.*",
+        "twig/extra-bundle": "^2.12|^3.0",
+        "twig/twig": "^2.12|^3.0"
     },
     "config": {
         "optimize-autoloader": true,
