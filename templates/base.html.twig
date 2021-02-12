@@ -11,6 +11,9 @@
     <body>
         {% block body %}
         <div id="root"></div>
+        <noscript>
+        Turn on javascript to see this app
+        </noscript>
         {% endblock %}
         {% block javascripts %}
         {{ encore_entry_script_tags('app') }}

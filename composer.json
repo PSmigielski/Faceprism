@@ -13,6 +13,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.0",
         "doctrine/orm": "^2.8",
         "lexik/jwt-authentication-bundle": "^2.10",
+        "opis/json-schema": "^1.0",
         "phpdocumentor/reflection-docblock": "^5.2",
         "sensio/framework-extra-bundle": "^5.6",
         "symfony/console": "5.2.*",

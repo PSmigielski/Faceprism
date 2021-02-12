@@ -114,6 +114,9 @@
     "nikic/php-parser": {
         "version": "v4.10.4"
     },
+    "opis/json-schema": {
+        "version": "1.0.19"
+    },
     "phpdocumentor/reflection-common": {
         "version": "2.2.0"
     },
