@@ -1,0 +1,16 @@
+@import '../views/ChangePassword/index.scss';
+@import '../views/Feed/index.scss';
+@import '../views/ForgetPassword/index.scss';
+@import '../views/Home/index.scss';
+@import '../views/Messenger/index.scss';
+@import '../views/Profile/index.scss';
+@import '../views/SettingsPage/index.scss';
+@import '../components/Hero/index.scss';
+@import '../components/LoginForm/index.scss';
+@import '../components/Logo/index.scss';
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap');*{
+    margin: 0px;
+    padding: 0px;
+    box-sizing: border-box;
+    font-family: 'Raleway', 'sans-serif';
+}

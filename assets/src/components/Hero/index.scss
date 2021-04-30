@@ -1,0 +1,12 @@
+.heroWrapper{
+    width: 35%;
+    height: 45%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    margin-right: 5%;
+    .heroParagraph{
+        font-size: 32px;
+    }
+}
