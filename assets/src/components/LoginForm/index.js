@@ -1,11 +1,10 @@
 import { useFormik } from "formik";
 import React from "react";
 import { Link } from "react-router-dom";
+import RegisterModal from "../RegisterModal";
 
 const LoginForm = () =>{
-    const validate = (values) => {
-        //add data validation
-    }
+    const [isOpen, setIsOpen] = React.useState(false);
     const handleLogin = (values) => {
         //add login handling
     }
@@ -14,7 +13,6 @@ const LoginForm = () =>{
             email: '',
             password: ''
         },
-        validate,
         onSubmit: handleLogin
     });
 
@@ -52,9 +50,10 @@ const LoginForm = () =>{
                         Zaloguj się
                     </button>
                     <div className="buttonContainerSeparator"></div>
-                    <button className="registerButton">
+                    <button className="registerButton" onClick={() => setIsOpen(true)}>
                         Zarejestruj się
                     </button>
+                    <RegisterModal open={isOpen} onClose={() => setIsOpen(false)}/>
                 </div>
                 <p className="loginFormLabel">Zapomniałeś hasło? <Link to="/forget">kliknij tutaj</Link></p>
             </form>
