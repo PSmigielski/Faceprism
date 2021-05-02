@@ -1,4 +1,8 @@
+.unvisible{
+    display: none;
+}
 .registerModal{ 
+    overflow: hidden;
     width: 30%;
     height: 70%;
     position: fixed;
@@ -17,7 +21,7 @@
         height: 90%;
         display: flex;
         align-items: center;
-        justify-content: space-around;
+        justify-content: flex-start;
         flex-direction: column;
         .registerModalHeader{
             width: 100%;
@@ -60,14 +64,24 @@
             align-items: center;
             justify-content: space-around;
             flex-direction: column;
-            .registerInput{
+            .inputContainer{
                 width: 100%;
-                height: 48px;
-                padding: 0px 20px 0px 20px;
-                background-color: #FFF8F8;
-                border:1px solid #7C7C7C;
-                border-radius: 10px;
-                font-size: 18px;
+                height: 52px;
+                .registerInput{
+                    width: 100%;
+                    height: 48px;
+                    padding: 0px 20px 0px 20px;
+                    background-color: #FFF8F8;
+                    border:1px solid #7C7C7C;
+                    border-radius: 10px;
+                    font-size: 18px;
+                }
+                .error{
+                    color:red;
+                    font-size: 14px;
+                    margin: 6px 0px 0px 20px;
+                    font-weight: 500;
+                }    
             }
             .registerButtonContainer{
                 width: 100%;

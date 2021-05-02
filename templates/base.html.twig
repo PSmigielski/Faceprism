@@ -6,11 +6,12 @@
         {% block stylesheets %}
         {{ encore_entry_link_tags('app') }}
         {% endblock %}
-
+        <link rel="shortcut icon" type="image/x-icon" href="{{asset('favicon.ico')}}" />
     </head>
     <body>
         {% block body %}
         <div id="root"></div>
+        <div id="portal"></div>
         <noscript>
         Turn on javascript to see this app
         </noscript>
