@@ -4,6 +4,7 @@ import {
     Switch,
     Route,
   } from "react-router-dom";
+import ChangePassword from './views/ChangePassword';
 import Home from './views/Home';
 import RemindPassword from './views/RemindPassword';
 
@@ -11,12 +12,9 @@ const App = () => {
     return (
     <Router>
         <Switch>
-          <Route path="/remind">
-            <RemindPassword />
-          </Route>
-          <Route path="/">
-            <Home />
-          </Route>
+          <Route path="/change" component={ChangePassword} />
+          <Route path="/remind" component={RemindPassword} />
+          <Route path="/" component={Home} />
         </Switch>
     </Router>
     );

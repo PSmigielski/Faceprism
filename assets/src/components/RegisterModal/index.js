@@ -54,10 +54,8 @@ const RegisterModal = React.forwardRef(({open, onClose}, ref) => {
                             </svg>
                         </div>
                     </nav> 
-                        <RegisterFirstStep ref={firstStepRef} nextStep={nextStep} setFirstStepData={setFirstStepData} /> 
-                        <RegisterSecondStep ref={secondStepRef} prevStep={prevStep} handleSubmitEvent={handleSubmitEvent} />
-                    
-                   
+                    <RegisterFirstStep ref={firstStepRef} nextStep={nextStep} setFirstStepData={setFirstStepData} /> 
+                    <RegisterSecondStep ref={secondStepRef} prevStep={prevStep} handleSubmitEvent={handleSubmitEvent} />
                 </div>
             </div>
         </>, document.getElementById('portal'));
