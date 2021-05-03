@@ -3,6 +3,7 @@
         "@babel/preset-react": "^7.12.13",
         "@symfony/webpack-encore": "^1.0.0",
         "core-js": "^3.0.0",
+        "file-loader": "^6.0.0",
         "regenerator-runtime": "^0.13.2",
         "sass": "^1.32.11",
         "sass-loader": "^10.1.1",
