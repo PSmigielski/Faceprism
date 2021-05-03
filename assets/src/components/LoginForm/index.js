@@ -81,7 +81,7 @@ const LoginForm = () =>{
                     </button>
                     <RegisterModal ref={[registerModalRef, registerModalBackgroundRef]} open={isOpen} onClose={handleModalClose}/>
                 </div>
-                <p className="loginFormLabel">Zapomniałeś hasło? <Link to="/forget">kliknij tutaj</Link></p>
+                <p className="loginFormLabel">Zapomniałeś hasło? <Link to="/remind">kliknij tutaj</Link></p>
             </form>
         </div>
     )

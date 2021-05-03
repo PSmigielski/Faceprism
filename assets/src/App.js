@@ -5,11 +5,15 @@ import {
     Route,
   } from "react-router-dom";
 import Home from './views/Home';
+import RemindPassword from './views/RemindPassword';
 
 const App = () => {
     return (
     <Router>
         <Switch>
+          <Route path="/remind">
+            <RemindPassword />
+          </Route>
           <Route path="/">
             <Home />
           </Route>

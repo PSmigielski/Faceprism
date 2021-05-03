@@ -9,7 +9,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class ViewController extends AbstractController
 {
     /**
-     * @Route("/")
+     * @Route("/{reactRouting}", name="home", defaults={"reactRouting":null})
      */
     public function index(): Response
     {
