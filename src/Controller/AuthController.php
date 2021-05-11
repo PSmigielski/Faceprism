@@ -58,7 +58,7 @@ class AuthController extends AbstractController
     /**
      * @Route("/register")
      */
-    public function add(Request $req, UserPasswordEncoderInterface $passEnc){
+    public function add(Request $req, UserPasswordEncoderInterface $passEnc):JsonResponse{  
         $reqData = [];
         if($content = $req->getContent()){
             $reqData=json_decode($content, true);
@@ -95,19 +95,54 @@ class AuthController extends AbstractController
                     return new JsonResponse(["error"=>"invalid email format"], 400);
                     break;
                 case "minLength":
-                    return new JsonResponse(["error"=>"password is too short"], 400);
+                    switch($result->getFirstError()->dataPointer()[0]){
+                        case "password":
+                            return new JsonResponse(["error"=>"password is too short"], 400);
+                            break;
+                        case "date_of_birth":
+                            return new JsonResponse(["error"=>"date of birth has wrong format"], 400);
+                            break;
+                        }
                     break;
                 case "maxLength":
-                    return new JsonResponse(["error"=>"password is too long"], 400);
+                    switch($result->getFirstError()->dataPointer()[0]){
+                        case "password":
+                            return new JsonResponse(["error"=>"password is too long"], 400);
+                            break;
+                        case "date_of_birth":
+                            return new JsonResponse(["error"=>"date of birth has wrong format"], 400);
+                            break;
+                        case "email":
+                            return new JsonResponse(["error"=>"email is too long"], 400);
+                            break;
+                        case "name":
+                            return new JsonResponse(["error"=>"name is too long"], 400);
+                            break;
+                        case "surname":
+                            return new JsonResponse(["error"=>"surname is too long"], 400);
+                            break;
+                    }
+
                     break;
                 case "required":
                     switch ($result->getFirstError()->keywordArgs()["missing"]) {
                         case "password":
                             return new JsonResponse(["error"=>"password is missing"], 400);
                             break;
-                        
                         case "email":
                             return new JsonResponse(["error"=>"email is missing"], 400);
+                            break;
+                        case "name":
+                            return new JsonResponse(["error"=>"name is missing"], 400);
+                            break;
+                        case "surname":
+                            return new JsonResponse(["error"=>"surname is missing"], 400);
+                            break;
+                        case "date_of_birth":
+                            return new JsonResponse(["error"=>"date of birth is missing"], 400);
+                            break;
+                        case "gender":
+                            return new JsonResponse(["error"=>"gender is missing"], 400);
                             break;
                     }
             }

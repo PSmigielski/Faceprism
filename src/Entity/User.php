@@ -204,7 +204,7 @@ class User implements UserInterface
     {
         if (!$this->us_posts->contains($usPost)) {
             $this->us_posts[] = $usPost;
-            $usPost->setPoAuthorId($this);
+            $usPost->setAuthorId($this);
         }
 
         return $this;
@@ -214,8 +214,8 @@ class User implements UserInterface
     {
         if ($this->us_posts->removeElement($usPost)) {
             // set the owning side to null (unless already changed)
-            if ($usPost->getPoAuthorId() === $this) {
-                $usPost->setPoAuthorId(null);
+            if ($usPost->getAuthorId() === $this) {
+                $usPost->setAuthorId(null);
             }
         }
 

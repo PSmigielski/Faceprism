@@ -19,7 +19,7 @@ class Post
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="us_posts")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(name="po_author_id",referencedColumnName = "us_id", nullable=false)
      */
     private $po_author_id;
 
@@ -34,59 +34,76 @@ class Post
     private $po_edited_at;
 
     /**
-     * @ORM\Column(type="json")
+     * @ORM\Column(type="text",length=1024, nullable=true)
      */
-    private $po_content = [];
+    private $po_text;
+
+    /**
+     * @ORM\Column(type="blob", nullable=true)
+     */
+    private $po_image;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getPoAuthorId(): ?User
+    public function getAuthorId(): ?User
     {
         return $this->po_author_id;
     }
 
-    public function setPoAuthorId(?User $po_author_id): self
+    public function setAuthorId(?User $po_author_id): self
     {
         $this->po_author_id = $po_author_id;
 
         return $this;
     }
 
-    public function getPoCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->po_created_at;
     }
 
-    public function setPoCreatedAt(\DateTimeInterface $po_created_at): self
+    public function setCreatedAt(\DateTimeInterface $po_created_at): self
     {
         $this->po_created_at = $po_created_at;
 
         return $this;
     }
 
-    public function getPoEditedAt(): ?\DateTimeInterface
+    public function getEditedAt(): ?\DateTimeInterface
     {
         return $this->po_edited_at;
     }
 
-    public function setPoEditedAt(?\DateTimeInterface $po_edited_at): self
+    public function setEditedAt(?\DateTimeInterface $po_edited_at): self
     {
         $this->po_edited_at = $po_edited_at;
 
         return $this;
     }
 
-    public function getPoContent(): ?array
+    public function getText(): ?string
     {
-        return $this->po_content;
+        return $this->po_text;
     }
 
-    public function setPoContent(array $po_content): self
+    public function setText(string $po_text): self
     {
-        $this->po_content = $po_content;
+        $this->po_text = $po_text;
+
+        return $this;
+    }
+
+    public function getImage()
+    {
+        return $this->po_image;
+    }
+
+    public function setImage($po_image): self
+    {
+        $this->po_image = $po_image;
 
         return $this;
     }
