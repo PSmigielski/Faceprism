@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\IdGenerator\UuidV4Generator;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
@@ -13,8 +14,8 @@ class User implements UserInterface
 {
     /**
      * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
+     * @ORM\Column(name="us_id", type="guid")
+     * @ORM\GeneratedValue(strategy="UUID")
      */
     private $us_id;
 
@@ -34,7 +35,27 @@ class User implements UserInterface
      */
     private $us_password;
 
-    public function getId(): ?int
+    /**
+     * @ORM\Column(type="string", length=30)
+     */
+    private $us_name;
+
+    /**
+     * @ORM\Column(type="string", length=100)
+     */
+    private $us_surname;
+
+    /**
+     * @ORM\Column(type="date")
+     */
+    private $us_date_of_birth;
+
+    /**
+     * @ORM\Column(type="string", length=20)
+     */
+    private $us_gender;
+
+    public function getId(): ?string
     {
         return $this->us_id;
     }
@@ -110,5 +131,53 @@ class User implements UserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->us_name;
+    }
+
+    public function setName(string $us_name): self
+    {
+        $this->us_name = $us_name;
+
+        return $this;
+    }
+
+    public function getSurname(): ?string
+    {
+        return $this->us_surname;
+    }
+
+    public function setSurname(string $us_surname): self
+    {
+        $this->us_surname = $us_surname;
+
+        return $this;
+    }
+
+    public function getDateOfBirth(): ?\DateTimeInterface
+    {
+        return $this->us_date_of_birth;
+    }
+
+    public function setDateOfBirth(\DateTimeInterface $us_date_of_birth): self
+    {
+        $this->us_date_of_birth = $us_date_of_birth;
+
+        return $this;
+    }
+
+    public function getGender(): ?string
+    {
+        return $this->us_gender;
+    }
+
+    public function setGender(string $us_gender): self
+    {
+        $this->us_gender = $us_gender;
+
+        return $this;
     }
 }

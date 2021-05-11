@@ -11,8 +11,25 @@
             "type": "string",
             "minLength": 8,
             "maxLength": 196
+        },
+        "name":{
+            "type": "string",
+            "maxLength": 30
+        },
+        "surname":{
+            "type": "string",
+            "maxLength": 100
+        },
+        "date_of_birth":{
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 10
+        },
+        "gender":{
+            "type":"string",
+            "maxLength": 20
         }
     },
-    "required": ["email", "password"],
+    "required": ["email", "password", "name", "surname", "date_of_birth", "gender"],
     "additionalProperties": false
 }

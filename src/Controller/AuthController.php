@@ -2,6 +2,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use DateTime;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Opis\JsonSchema\{
     Validator, ValidationResult, ValidationError, Schema
@@ -15,11 +16,13 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
-
+/**
+ * @Route("/v1/api/auth", methods={"POST"})
+ */
 class AuthController extends AbstractController
 {
     /**
-     * @Route("/v1/api/auth/login", methods={"POST"})
+     * @Route("/login")
      */
     public function login(Request $req,JWTTokenManagerInterface $JWT): JsonResponse
     {
@@ -53,7 +56,7 @@ class AuthController extends AbstractController
 
     }
     /**
-     * @Route("/v1/api/auth/register", methods={"POST"})
+     * @Route("/register")
      */
     public function add(Request $req, UserPasswordEncoderInterface $passEnc){
         $reqData = [];
@@ -66,10 +69,18 @@ class AuthController extends AbstractController
         if($result->isValid()){
             $email = $reqData['email'];
             $passwd = $reqData['password'];
+            $name = $reqData['name']; 
+            $surname = $reqData['surname'];
+            $BDate = $reqData['date_of_birth'];
+            $gender = $reqData['gender'];
             $user = new User();
             $passwordEncoder = $passEnc;
             $user->setEmail($email);
             $user->setPassword($passwordEncoder->encodePassword($user, $passwd));
+            $user->setDateOfBirth(new DateTime($BDate));
+            $user->setGender($gender);
+            $user->setName($name);
+            $user->setSurname($surname);
             $user->setRoles([]);
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
             $resData = $serializer->serialize($user, "json");
