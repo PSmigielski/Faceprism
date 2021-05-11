@@ -3,8 +3,9 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Bridge\Doctrine\IdGenerator\UuidV4Generator;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
@@ -54,6 +55,16 @@ class User implements UserInterface
      * @ORM\Column(type="string", length=20)
      */
     private $us_gender;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Post::class, mappedBy="po_author_id", orphanRemoval=true)
+     */
+    private $us_posts;
+
+    public function __construct()
+    {
+        $this->us_posts = new ArrayCollection();
+    }
 
     public function getId(): ?string
     {
@@ -177,6 +188,36 @@ class User implements UserInterface
     public function setGender(string $us_gender): self
     {
         $this->us_gender = $us_gender;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Post[]
+     */
+    public function getUsPosts(): Collection
+    {
+        return $this->us_posts;
+    }
+
+    public function addUsPost(Post $usPost): self
+    {
+        if (!$this->us_posts->contains($usPost)) {
+            $this->us_posts[] = $usPost;
+            $usPost->setPoAuthorId($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUsPost(Post $usPost): self
+    {
+        if ($this->us_posts->removeElement($usPost)) {
+            // set the owning side to null (unless already changed)
+            if ($usPost->getPoAuthorId() === $this) {
+                $usPost->setPoAuthorId(null);
+            }
+        }
 
         return $this;
     }
