@@ -1,0 +1,6 @@
+babdev_pagerfanta:
+    default_view: default
+    default_twig_template: '@BabDevPagerfanta/default.html.twig'
+    exceptions_strategy:
+        out_of_range_page: to_http_not_found
+        not_valid_current_page: to_http_not_found

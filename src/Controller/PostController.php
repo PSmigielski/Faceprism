@@ -4,9 +4,13 @@ namespace App\Controller;
 
 use App\Entity\Post;
 use App\Entity\User;
+use App\Repository\PostRepository;
 use DateTime;
 use Opis\JsonSchema\Schema;
 use Opis\JsonSchema\Validator;
+use Pagerfanta\Exception\OutOfRangeCurrentPageException;
+use Pagerfanta\Doctrine\ORM\QueryAdapter;
+use Pagerfanta\Pagerfanta;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,14 +29,32 @@ class PostController extends AbstractController
     /**
      * @Route("", name="get_posts", methods={"GET"})
      */
-    public function index(SerializerInterface $serializer): JsonResponse
+    public function index(PostRepository $repo, SerializerInterface $serializer, Request $request): JsonResponse
     {
-        $posts = $this->getDoctrine()->getRepository(Post::class)->findAll();
-        if(!$posts){
-            return new JsonResponse(["message" => "no posts found"],404);
+        try{
+            $page = $request->query->get('page', 1);
+            $qb = $repo->createFindAllQuery();
+            $adapter = new QueryAdapter($qb);
+            $pagerfanta = new Pagerfanta($adapter);
+            $pagerfanta->setMaxPerPage(25);
+            $pagerfanta->setCurrentPage($page);
+            $posts = array();
+            foreach($pagerfanta->getCurrentPageResults() as $post){
+                $posts[] = $post;
+            } 
+            $data = [
+                "page"=> $page,
+                "totalPages" => $pagerfanta->getNbPages(),
+                "count" => $pagerfanta->getNbResults(),
+                "posts"=> $posts
+            ];
+            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+            $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['usPosts', "transitions", "password",]]);
+            return JsonResponse::fromJsonString($resData, 200);
         }
-        $data = $serializer->serialize($posts, "json", ['ignored_attributes' => ['usPosts', "transitions"]]);
-        return JsonResponse::fromJsonString($data);
+        catch(OutOfRangeCurrentPageException $e){
+            return new JsonResponse(["message"=>"Page not found"], 404);
+        }
     }
     /**
      * @Route("/{id}", name="get_post", methods={"GET"})

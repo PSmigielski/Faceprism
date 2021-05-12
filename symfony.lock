@@ -1,4 +1,7 @@
 {
+    "babdev/pagerfanta-bundle": {
+        "version": "v3.2.0"
+    },
     "composer/package-versions-deprecated": {
         "version": "1.11.99.1"
     },
@@ -119,6 +122,12 @@
     },
     "opis/json-schema": {
         "version": "1.0.19"
+    },
+    "pagerfanta/core": {
+        "version": "v3.1.0"
+    },
+    "pagerfanta/doctrine-orm-adapter": {
+        "version": "v3.1.0"
     },
     "phpdocumentor/reflection-common": {
         "version": "2.2.0"
