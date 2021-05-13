@@ -49,7 +49,7 @@ class PostController extends AbstractController
                 "posts"=> $posts
             ];
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['usPosts', "transitions", "password",]]);
+            $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['usPosts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt"]]);
             return JsonResponse::fromJsonString($resData, 200);
         }
         catch(OutOfRangeCurrentPageException $e){
@@ -84,7 +84,7 @@ class PostController extends AbstractController
             $author_id = $reqData['author_uuid'];
             $post = new Post();
             $author = $this->getDoctrine()->getRepository(User::class)->find($author_id);
-            $post->setAuthorId($author);
+            $post->setAuthor($author);
             if(array_key_exists('text', $reqData)){
                 $post->setText($reqData['text']);
             }
@@ -115,6 +115,44 @@ class PostController extends AbstractController
                             break;
                     }
                     break;
+            }
+        }
+    }
+    /**
+     * @Route("/{id}", name="edit_post", methods={"PUT"})
+     */
+    public function edit(Request $request, string $id)
+    {
+        $reqData = [];
+        if($content = $request->getContent()){
+            $reqData=json_decode($content, true);
+        }
+        $schema = Schema::fromJsonString(file_get_contents(__DIR__.'/../Schemas/editPostSchema.json'));
+        $validator = new Validator();
+        $object = (object)$reqData;
+        $result = $validator->schemaValidation((object)$object, $schema);
+        if($result->isValid()){
+            $em = $this->getDoctrine()->getManager();
+            $post = $em->getRepository(Post::class)->find($id);
+            if(array_key_exists('text', $reqData)){
+                $text = $reqData['text'];
+                $post->setText($text);
+            }
+            if(array_key_exists('img', $reqData)){
+                $img = $reqData['img'];
+                $post->setImage($img);
+            }
+            $em->persist($post);
+            $em->flush();
+            return new JsonResponse(["message"=>"Post has been edited"], 200);
+        }
+        else{
+            switch($result->getFirstError()->keyword()){
+                case "maxLength":
+                    switch($result->getFirstError()->dataPointer()[0]){
+                        case "text":
+                            return new JsonResponse(["error"=>"text is too long"], 400);
+                    }
             }
         }
     }

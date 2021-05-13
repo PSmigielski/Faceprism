@@ -12,16 +12,16 @@ class Post
 {
     /**
      * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
+     * @ORM\Column(name="po_id", type="guid")
+     * @ORM\GeneratedValue(strategy="UUID")
      */
-    private $id;
+    private $po_id;
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="us_posts")
-     * @ORM\JoinColumn(name="po_author_id",referencedColumnName = "us_id", nullable=false)
+     * @ORM\JoinColumn(name="po_author",referencedColumnName = "us_id", nullable=false)
      */
-    private $po_author_id;
+    private $po_author;
 
     /**
      * @ORM\Column(type="datetime")
@@ -39,23 +39,23 @@ class Post
     private $po_text;
 
     /**
-     * @ORM\Column(type="blob", nullable=true)
+     * @ORM\Column(type="string", nullable=true)
      */
     private $po_image;
 
-    public function getId(): ?int
+    public function getId(): ?string
     {
-        return $this->id;
+        return $this->po_id;
     }
 
-    public function getAuthorId(): ?User
+    public function getAuthor(): ?User
     {
-        return $this->po_author_id;
+        return $this->po_author;
     }
 
-    public function setAuthorId(?User $po_author_id): self
+    public function setAuthor(?User $po_author): self
     {
-        $this->po_author_id = $po_author_id;
+        $this->po_author = $po_author;
 
         return $this;
     }

@@ -3,10 +3,12 @@ namespace App\Controller;
 
 use App\Entity\User;
 use DateTime;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Opis\JsonSchema\{
     Validator, ValidationResult, ValidationError, Schema
 };
+use PDOException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
@@ -75,19 +77,23 @@ class AuthController extends AbstractController
             $gender = $reqData['gender'];
             $user = new User();
             $passwordEncoder = $passEnc;
-            $user->setEmail($email);
-            $user->setPassword($passwordEncoder->encodePassword($user, $passwd));
-            $user->setDateOfBirth(new DateTime($BDate));
-            $user->setGender($gender);
-            $user->setName($name);
-            $user->setSurname($surname);
-            $user->setRoles([]);
-            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($user, "json");
             $em = $this->getDoctrine()->getManager();
-            $em->persist($user);
-            $em->flush();
-            return JsonResponse::fromJsonString($resData, 201);
+            if(!$em->getRepository(User::class)->findOneBy(["us_email" => $email])){
+                $user->setEmail($email);
+                $user->setPassword($passwordEncoder->encodePassword($user, $passwd));
+                $user->setDateOfBirth(new DateTime($BDate));
+                $user->setGender($gender);
+                $user->setName($name);
+                $user->setSurname($surname);
+                $user->setRoles([]);
+                $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+                $resData = $serializer->serialize($user, "json",['ignored_attributes' => ['usPosts', "transitions"]]);
+                $em->persist($user);
+                $em->flush();
+                return JsonResponse::fromJsonString($resData, 201);         
+            }else{
+                return new JsonResponse(["error"=>"user with this email exist!"], 400);
+            }
         }
         else{
             switch($result->getFirstError()->keyword()){
@@ -149,4 +155,5 @@ class AuthController extends AbstractController
         }
 
     }
+    //add token refresh method
 }

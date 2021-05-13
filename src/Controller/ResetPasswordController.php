@@ -19,7 +19,7 @@ use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
 use SymfonyCasts\Bundle\ResetPassword\ResetPasswordHelperInterface;
 
 /**
- * @Route("/v1/api/auth/reset-password", methods={"POST"})
+ * @Route("/v1/api/auth/resetpaswd", methods={"POST"})
  */
 class ResetPasswordController extends AbstractController
 {
@@ -72,7 +72,7 @@ class ResetPasswordController extends AbstractController
     /**
      * Validates and process the reset URL that the user clicked in their email.
      *
-     * @Route("/reset/{token}")
+     * @Route("/{token}")
      */
     public function reset(Request $request, UserPasswordEncoderInterface $passwordEncoder, string $token= null): JsonResponse
     {
