@@ -119,7 +119,7 @@ class PostController extends AbstractController
         }
     }
     /**
-     * @Route("/{id}", name="edit_post", methods={"PUT"})
+     * @Route("/{id}", name="edit_comment", methods={"PUT"})
      */
     public function edit(Request $request, string $id)
     {
@@ -134,6 +134,9 @@ class PostController extends AbstractController
         if($result->isValid()){
             $em = $this->getDoctrine()->getManager();
             $post = $em->getRepository(Post::class)->find($id);
+            if(!$post){
+                return new JsonResponse(["message"=>"Post does not exist"], 404);
+            }
             if(array_key_exists('text', $reqData)){
                 $text = $reqData['text'];
                 $post->setText($text);
@@ -155,5 +158,19 @@ class PostController extends AbstractController
                     }
             }
         }
+    }
+    /**
+     * @Route("/{id}", name="delete_post", methods={"DELETE"})
+     */
+    public function remove(string $id)
+    {
+        $em = $this->getDoctrine()->getManager();
+        $post = $em->getRepository(Post::class)->find($id);
+        if(!$post){
+            return new JsonResponse(["message"=>"Post does not exist"], 404);
+        }
+        $em->remove($post);
+        $em->flush();
+        return new JsonResponse(["message"=>"Post has been deleted"], 200);
     }
 }

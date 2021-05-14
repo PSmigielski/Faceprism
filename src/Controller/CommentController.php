@@ -57,7 +57,7 @@ class CommentController extends AbstractController
 
     }
     /**
-     * @Route("", methods={"POST"})
+     * @Route("", name="create_comment",methods={"POST"})
      */
     public function create(Request $request):JsonResponse
     {
@@ -108,7 +108,7 @@ class CommentController extends AbstractController
         }
     }
     /**
-     * @Route("/{id}", methods={"PUT"})
+     * @Route("/{id}", name="edit_comment",methods={"PUT"})
      */
     public function edit(Request $request, string $id):JsonResponse
     {
@@ -123,6 +123,9 @@ class CommentController extends AbstractController
         if($result->isValid()){
             $em = $this->getDoctrine()->getManager();
             $comment = $em->getRepository(Comment::class)->find($id);
+            if(!$comment){
+                return new JsonResponse(["error"=>"comment does not exist!"], 404);
+            }
             $comment->setText($reqData['text']);
             $em->persist($comment);
             $em->flush();
@@ -137,5 +140,20 @@ class CommentController extends AbstractController
                     }
             }
         }
+    }
+    /**
+     * @Route("/{id}", name="delete_comment", methods={"DELETE"})
+     */
+    public function remove(string $id)
+    {
+        $em = $this->getDoctrine()->getManager();
+        $comment = $em->getRepository(Comment::class)->find($id);
+        if(!$comment){
+            dump($comment);
+            return new JsonResponse(["message"=>"Comment does not exist"], 404);
+        }
+        $em->remove($comment);
+        $em->flush();
+        return new JsonResponse(["message"=>"Comment has been deleted"], 200);
     }
 }
