@@ -155,5 +155,18 @@ class AuthController extends AbstractController
         }
 
     }
+    /**
+     * @Route("/remove/{id}", methods={"DELETE"})
+     */
+    public function remove(string $id){
+        $em = $this->getDoctrine()->getManager();
+        $user = $em->getRepository(User::class)->find($id);
+        if(!$user){
+            return new JsonResponse(["error" => "User with this id does not exist!"], 404);
+        }
+        $em->remove($user);
+        $em->flush();
+        return new JsonResponse(["message"=>"User has been deleted"], 201);
+    }
     //add token refresh method
 }
