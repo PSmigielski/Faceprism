@@ -2,14 +2,15 @@
 
 namespace App\Controller;
 
+use App\Entity\Comment;
 use App\Entity\Post;
 use App\Entity\User;
-use App\Repository\PostRepository;
+use App\Repository\CommentRepository;
 use DateTime;
 use Opis\JsonSchema\Schema;
 use Opis\JsonSchema\Validator;
-use Pagerfanta\Exception\OutOfRangeCurrentPageException;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
+use Pagerfanta\Exception\OutOfRangeCurrentPageException;
 use Pagerfanta\Pagerfanta;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,55 +21,43 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 
-/**
- * @Route("/v1/api/posts")
- * 
- */
-class PostController extends AbstractController
+    /**
+     * @Route("/v1/api/comments", name="comment")
+     */
+class CommentController extends AbstractController
 {
     /**
-     * @Route("", name="get_posts", methods={"GET"})
+     * @Route("/{postId}", name="get_comments", methods={"GET"})
      */
-    public function index(PostRepository $repo, SerializerInterface $serializer, Request $request): JsonResponse
+    public function index(CommentRepository $repo, Request $request, SerializerInterface $serializer, string $postId): JsonResponse
     {
         try{
             $page = $request->query->get('page', 1);
-            $qb = $repo->createFindAllQuery();
+            $qb = $repo->findAllComments($postId);
             $adapter = new QueryAdapter($qb);
             $pagerfanta = new Pagerfanta($adapter);
             $pagerfanta->setMaxPerPage(25);
             $pagerfanta->setCurrentPage($page);
-            $posts = array();
-            foreach($pagerfanta->getCurrentPageResults() as $post){
-                $posts[] = $post;
-            } 
+            $comments = array();
+            foreach($pagerfanta->getCurrentPageResults() as $comment){
+                $comments[] = $comment;
+            }
             $data = [
                 "page"=> $page,
                 "totalPages" => $pagerfanta->getNbPages(),
                 "count" => $pagerfanta->getNbResults(),
-                "posts"=> $posts
+                "comments"=> $comments
             ];
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
             $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['usPosts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt", "post"]]);
-            return JsonResponse::fromJsonString($resData, 200);
-        }
-        catch(OutOfRangeCurrentPageException $e){
+            return JsonResponse::fromJsonString($resData);
+        }catch(OutOfRangeCurrentPageException $e){
             return new JsonResponse(["message"=>"Page not found"], 404);
         }
+
     }
     /**
-     * @Route("/{id}", name="get_post", methods={"GET"})
-     */
-    public function show(int $id): JsonResponse
-    {
-        $post = $this->getDoctrine()->getRepository(Post::class)->find($id);
-        if(!$post){
-            return new JsonResponse(["message" => "no posts found"],404);
-        }
-        return new JsonResponse($post, 200);
-    }
-    /**
-     * @Route("", name="add_post", methods={"POST"})
+     * @Route("", methods={"POST"})
      */
     public function create(Request $request):JsonResponse
     {
@@ -76,30 +65,27 @@ class PostController extends AbstractController
         if($content = $request->getContent()){
             $reqData=json_decode($content, true);
         }
-        $schema = Schema::fromJsonString(file_get_contents(__DIR__.'/../Schemas/postSchema.json'));
+        $schema = Schema::fromJsonString(file_get_contents(__DIR__.'/../Schemas/commentSchema.json'));
         $validator = new Validator();
         $object = (object)$reqData;
         $result = $validator->schemaValidation((object)$object, $schema);
         if($result->isValid()){
-            $author_id = $reqData['author_uuid'];
-            $post = new Post();
-            $author = $this->getDoctrine()->getRepository(User::class)->find($author_id);
-            $post->setAuthor($author);
-            if(array_key_exists('text', $reqData)){
-                $post->setText($reqData['text']);
-            }
-            if(array_key_exists('img', $reqData)){
-                $post->setImage($reqData['img']);
-            }
-            $post->setCreatedAt(new DateTime("now"));
+            $comment = new Comment();
+            $author = $this->getDoctrine()->getRepository(User::class)->find($reqData['author_uuid']);
+            $post = $this->getDoctrine()->getRepository(Post::class)->find($reqData['post_uuid']);
+            $comment->setAuthor($author);
+            $comment->setPost($post);
+            $comment->setText($reqData['text']);
+            $comment->setCreatedAt(new DateTime("now"));
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($post, "json",['ignored_attributes' => ['usPosts', "transitions", "password", "salt", "dateOfBirth", "roles"]]);
+            $resData = $serializer->serialize($comment, "json",['ignored_attributes' => ['usPosts', "transitions", "password", "salt", "dateOfBirth", "roles", "email", "username","gender","post"]]);
             $em = $this->getDoctrine()->getManager();
-            $em->persist($post);
+            $em->persist($comment);
             $em->flush();
             return JsonResponse::fromJsonString($resData, 201);
         }
         else{
+            dump($result->getFirstError()->keyword());
             switch($result->getFirstError()->keyword()){
                 case "maxLength":
                     switch($result->getFirstError()->dataPointer()[0]){
@@ -113,36 +99,32 @@ class PostController extends AbstractController
                         case "author_uuid":
                             return new JsonResponse(["error"=>"author uuid is missing"], 400);
                             break;
+                        case "post_uuid":
+                            return new JsonResponse(["error"=>"post uuid is missing"], 400);
+                            break;
                     }
                     break;
             }
         }
     }
     /**
-     * @Route("/{id}", name="edit_post", methods={"PUT"})
+     * @Route("/{id}", methods={"PUT"})
      */
-    public function edit(Request $request, string $id)
+    public function edit(Request $request, string $id):JsonResponse
     {
         $reqData = [];
         if($content = $request->getContent()){
             $reqData=json_decode($content, true);
         }
-        $schema = Schema::fromJsonString(file_get_contents(__DIR__.'/../Schemas/editPostSchema.json'));
+        $schema = Schema::fromJsonString(file_get_contents(__DIR__.'/../Schemas/commentEditSchema.json'));
         $validator = new Validator();
         $object = (object)$reqData;
         $result = $validator->schemaValidation((object)$object, $schema);
         if($result->isValid()){
             $em = $this->getDoctrine()->getManager();
-            $post = $em->getRepository(Post::class)->find($id);
-            if(array_key_exists('text', $reqData)){
-                $text = $reqData['text'];
-                $post->setText($text);
-            }
-            if(array_key_exists('img', $reqData)){
-                $img = $reqData['img'];
-                $post->setImage($img);
-            }
-            $em->persist($post);
+            $comment = $em->getRepository(Comment::class)->find($id);
+            $comment->setText($reqData['text']);
+            $em->persist($comment);
             $em->flush();
             return new JsonResponse(["message"=>"Post has been edited"], 200);
         }

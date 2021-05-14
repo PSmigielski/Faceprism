@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\PostRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -42,6 +44,16 @@ class Post
      * @ORM\Column(type="string", nullable=true)
      */
     private $po_image;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Comment::class, mappedBy="co_post", orphanRemoval=true)
+     */
+    private $po_comments;
+
+    public function __construct()
+    {
+        $this->po_comments = new ArrayCollection();
+    }
 
     public function getId(): ?string
     {
@@ -104,6 +116,36 @@ class Post
     public function setImage($po_image): self
     {
         $this->po_image = $po_image;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Comment[]
+     */
+    public function getPoComments(): Collection
+    {
+        return $this->po_comments;
+    }
+
+    public function addPoComment(Comment $poComment): self
+    {
+        if (!$this->po_comments->contains($poComment)) {
+            $this->po_comments[] = $poComment;
+            $poComment->setPost($this);
+        }
+
+        return $this;
+    }
+
+    public function removePoComment(Comment $poComment): self
+    {
+        if ($this->po_comments->removeElement($poComment)) {
+            // set the owning side to null (unless already changed)
+            if ($poComment->getPost() === $this) {
+                $poComment->setPost(null);
+            }
+        }
 
         return $this;
     }

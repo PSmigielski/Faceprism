@@ -57,7 +57,7 @@ class User implements UserInterface
     private $us_gender;
 
     /**
-     * @ORM\OneToMany(targetEntity=Post::class, mappedBy="po_author_id", orphanRemoval=true)
+     * @ORM\OneToMany(targetEntity=Post::class, mappedBy="po_author", orphanRemoval=true)
      */
     private $us_posts;
 
