@@ -37,34 +37,21 @@ class ResetPasswordController extends AbstractController
      *
      * @Route("", name="app_forgot_password_request")
      */
-    public function request(Request $request, MailerInterface $mailer): Response
+    public function request(Request $request, MailerInterface $mailer, SchemaController $schemaController): Response
     {
         $reqData = [];
         if($content = $request->getContent()){
             $reqData=json_decode($content, true);
         }
-        $schema = Schema::fromJsonString(file_get_contents(__DIR__.'/../Schemas/resetPasswordRequestSchema.json'));
-        $validator = new Validator();
-        $result = $validator->schemaValidation((object)$reqData, $schema);
-        if($result->isValid()){
-            $email = $reqData['email'];
+        $result = $schemaController->validateSchema('/../Schemas/resetPasswordRequestSchema.json', $reqData);
+        if($result===true){
             return $this->processSendingPasswordResetEmail(
-                $email,
+                $reqData['email'],
                 $mailer
             );
         }
         else{
-            switch($result->getFirstError()->keyword()){
-                case "format":
-                    return new JsonResponse(["error"=>"invalid email format"], 400);
-                    break;
-                case "required":
-                    switch ($result->getFirstError()->keywordArgs()["missing"]) {
-                        case "email":
-                            return new JsonResponse(["error"=>"email is missing"], 400);
-                            break;
-                    }
-            }
+            return $result;
         }
 
     }

@@ -3,12 +3,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use DateTime;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
-use Opis\JsonSchema\{
-    Validator, ValidationResult, ValidationError, Schema
-};
-use PDOException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;

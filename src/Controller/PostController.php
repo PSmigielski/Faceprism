@@ -7,8 +7,6 @@ use App\Entity\User;
 use App\Controller\SchemaController;
 use App\Repository\PostRepository;
 use DateTime;
-use Opis\JsonSchema\Schema;
-use Opis\JsonSchema\Validator;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Pagerfanta\Pagerfanta;
