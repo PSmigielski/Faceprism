@@ -13,6 +13,7 @@
         "doctrine/doctrine-bundle": "^2.2",
         "doctrine/doctrine-migrations-bundle": "^3.0",
         "doctrine/orm": "^2.8",
+        "gesdinet/jwt-refresh-token-bundle": "^0.12.0",
         "lexik/jwt-authentication-bundle": "^2.10",
         "opis/json-schema": "^1.0",
         "pagerfanta/doctrine-orm-adapter": "^3.1",

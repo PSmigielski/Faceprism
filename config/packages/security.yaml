@@ -23,10 +23,10 @@ security:
                 username_path: email
                 password_path: password
         api:
-            pattern:   ^/api
+            pattern:   ^/v1/api
             stateless: true
             guard:
-                authenticators:
+                authenticators: 
                     - lexik_jwt_authentication.jwt_token_authenticator
         main:
             anonymous: true
@@ -34,5 +34,5 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY  }
-        - { path: ^/api, roles: ROLE_USER }
+        - { path: ^/v1/api/auth/login, roles: IS_AUTHENTICATED_ANONYMOUSLY  }
+        - { path: ^/v1/api, roles: ROLE_USER }

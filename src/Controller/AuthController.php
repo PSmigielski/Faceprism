@@ -2,6 +2,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use DateInterval;
 use DateTime;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -37,7 +38,9 @@ class AuthController extends AbstractController
                 "roles" => $this->getUser()->getRoles()
             ]
         ],200);
-        $res->headers->setCookie(Cookie::create('token',$JWT->create($user), strtotime('Fri, 20-May-2044 15:25:52 GMT'),'/',null,null,true,false));
+        $date = new DateTime("now");
+        $date->add(new DateInterval('PT1H'));
+        $res->headers->setCookie(Cookie::create('token',$JWT->create($user), $date,'/',null,null,true,false));
         return $res;
     }
     /**
