@@ -5,10 +5,9 @@ namespace App\Controller;
 use App\Entity\Comment;
 use App\Entity\Post;
 use App\Entity\User;
+use App\Controller\SchemaController;
 use App\Repository\CommentRepository;
 use DateTime;
-use Opis\JsonSchema\Schema;
-use Opis\JsonSchema\Validator;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
 use Pagerfanta\Pagerfanta;
@@ -59,17 +58,14 @@ class CommentController extends AbstractController
     /**
      * @Route("", name="create_comment",methods={"POST"})
      */
-    public function create(Request $request):JsonResponse
+    public function create(Request $request, SchemaController $schemaController):JsonResponse
     {
         $reqData = [];
         if($content = $request->getContent()){
             $reqData=json_decode($content, true);
         }
-        $schema = Schema::fromJsonString(file_get_contents(__DIR__.'/../Schemas/commentSchema.json'));
-        $validator = new Validator();
-        $object = (object)$reqData;
-        $result = $validator->schemaValidation((object)$object, $schema);
-        if($result->isValid()){
+        $result = $schemaController->validateSchema('/../Schemas/commentSchema.json', (object)$reqData);
+        if($result===true){
             $comment = new Comment();
             $author = $this->getDoctrine()->getRepository(User::class)->find($reqData['author_uuid']);
             $post = $this->getDoctrine()->getRepository(Post::class)->find($reqData['post_uuid']);
@@ -85,42 +81,20 @@ class CommentController extends AbstractController
             return JsonResponse::fromJsonString($resData, 201);
         }
         else{
-            dump($result->getFirstError()->keyword());
-            switch($result->getFirstError()->keyword()){
-                case "maxLength":
-                    switch($result->getFirstError()->dataPointer()[0]){
-                        case "text":
-                            return new JsonResponse(["error"=>"text is too long"], 400);
-                            break;
-                    }
-                    break;
-                case "required":
-                    switch ($result->getFirstError()->keywordArgs()["missing"]) {
-                        case "author_uuid":
-                            return new JsonResponse(["error"=>"author uuid is missing"], 400);
-                            break;
-                        case "post_uuid":
-                            return new JsonResponse(["error"=>"post uuid is missing"], 400);
-                            break;
-                    }
-                    break;
-            }
+            return $result;
         }
     }
     /**
      * @Route("/{id}", name="edit_comment",methods={"PUT"})
      */
-    public function edit(Request $request, string $id):JsonResponse
+    public function edit(Request $request, string $id, SchemaController $schemaController):JsonResponse
     {
         $reqData = [];
         if($content = $request->getContent()){
             $reqData=json_decode($content, true);
         }
-        $schema = Schema::fromJsonString(file_get_contents(__DIR__.'/../Schemas/commentEditSchema.json'));
-        $validator = new Validator();
-        $object = (object)$reqData;
-        $result = $validator->schemaValidation((object)$object, $schema);
-        if($result->isValid()){
+        $result = $schemaController->validateSchema('/../Schemas/commentEditSchema.json', (object)$reqData);
+        if($result === true){
             $em = $this->getDoctrine()->getManager();
             $comment = $em->getRepository(Comment::class)->find($id);
             if(!$comment){
@@ -132,13 +106,7 @@ class CommentController extends AbstractController
             return new JsonResponse(["message"=>"Post has been edited"], 200);
         }
         else{
-            switch($result->getFirstError()->keyword()){
-                case "maxLength":
-                    switch($result->getFirstError()->dataPointer()[0]){
-                        case "text":
-                            return new JsonResponse(["error"=>"text is too long"], 400);
-                    }
-            }
+            return $result;
         }
     }
     /**

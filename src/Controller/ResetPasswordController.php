@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Controller\SchemaController;
 use Opis\JsonSchema\Schema;
 use Opis\JsonSchema\Validator;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -43,7 +44,7 @@ class ResetPasswordController extends AbstractController
         if($content = $request->getContent()){
             $reqData=json_decode($content, true);
         }
-        $result = $schemaController->validateSchema('/../Schemas/resetPasswordRequestSchema.json', $reqData);
+        $result = $schemaController->validateSchema('/../Schemas/resetPasswordRequestSchema.json', (object)$reqData);
         if($result===true){
             return $this->processSendingPasswordResetEmail(
                 $reqData['email'],
