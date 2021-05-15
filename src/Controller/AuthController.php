@@ -38,9 +38,6 @@ class AuthController extends AbstractController
                 "roles" => $this->getUser()->getRoles()
             ]
         ],200);
-        $date = new DateTime("now");
-        $date->add(new DateInterval('PT1H'));
-        $res->headers->setCookie(Cookie::create('token',$JWT->create($user), $date,'/',null,null,true,false));
         return $res;
     }
     /**
