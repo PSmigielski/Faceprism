@@ -33,58 +33,40 @@ class AuthController extends AbstractController
         if($content = $req->getContent()){
             $reqData=json_decode($content, true);
         }
-        if(isset($reqData['email'])){
-            if(isset($reqData['password'])){
-                $email = $reqData['email'];
-                $user->setEmail($email);
-                $user->getId();
-                $res = 
-                new JsonResponse([
-                    "data"=>[
-                        "id" => $this->getUser()->getId(),
-                        "email" => $this->getUser()->getEmail(),
-                        "roles" => $this->getUser()->getRoles()
-                    ]
-                ],200);
-                $res->headers->setCookie(Cookie::create('token',$JWT->create($user), strtotime('Fri, 20-May-2044 15:25:52 GMT'),'/',null,null,true,false));
-                return $res;
-
-            }else{
-                return new JsonResponse(["error"=>"invalid data"], 400);
-            }
-        }else{
-            return new JsonResponse(["error"=>"invalid data"], 400);
-        }
-
+        $user->setEmail($reqData['email']);
+        $user->getId();
+        $res = new JsonResponse([
+            "data"=>[
+                "id" => $this->getUser()->getId(),
+                "email" => $this->getUser()->getEmail(),
+                "roles" => $this->getUser()->getRoles()
+            ]
+        ],200);
+        $res->headers->setCookie(Cookie::create('token',$JWT->create($user), strtotime('Fri, 20-May-2044 15:25:52 GMT'),'/',null,null,true,false));
+        return $res;
     }
     /**
      * @Route("/register")
      */
-    public function add(Request $req, UserPasswordEncoderInterface $passEnc):JsonResponse{  
+    public function add(Request $req,SchemaController $schemaController, UserPasswordEncoderInterface $passEnc):JsonResponse{  
         $reqData = [];
         if($content = $req->getContent()){
             $reqData=json_decode($content, true);
         }
-        $schema = Schema::fromJsonString(file_get_contents(__DIR__.'/../Schemas/registerSchema.json'));
-        $validator = new Validator();
-        $result = $validator->schemaValidation((object)$reqData, $schema);
-        if($result->isValid()){
-            $email = $reqData['email'];
-            $passwd = $reqData['password'];
-            $name = $reqData['name']; 
-            $surname = $reqData['surname'];
-            $BDate = $reqData['date_of_birth'];
-            $gender = $reqData['gender'];
+        $result = $schemaController->validateSchema('/../Schemas/registerSchema.json', (object)$reqData);
+        if($result === true){
             $user = new User();
-            $passwordEncoder = $passEnc;
             $em = $this->getDoctrine()->getManager();
-            if(!$em->getRepository(User::class)->findOneBy(["us_email" => $email])){
-                $user->setEmail($email);
-                $user->setPassword($passwordEncoder->encodePassword($user, $passwd));
-                $user->setDateOfBirth(new DateTime($BDate));
-                $user->setGender($gender);
-                $user->setName($name);
-                $user->setSurname($surname);
+            if(!$em->getRepository(User::class)->findOneBy(["us_email" => $reqData['email']])){
+                $user->setEmail($reqData['email']);
+                $user->setPassword($passEnc->encodePassword($user, $reqData['password']));
+                if(!$schemaController->verifyDate($reqData['date_of_birth'])){
+                    return new JsonResponse(["error"=>"invalid date"], 400);
+                }
+                $user->setDateOfBirth(new DateTime($reqData['date_of_birth']));
+                $user->setGender($reqData['gender']);
+                $user->setName($reqData['name']);
+                $user->setSurname( $reqData['surname']);
                 $user->setRoles([]);
                 $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
                 $resData = $serializer->serialize($user, "json",['ignored_attributes' => ['usPosts', "transitions"]]);
@@ -96,67 +78,12 @@ class AuthController extends AbstractController
             }
         }
         else{
-            switch($result->getFirstError()->keyword()){
-                case "format":
-                    return new JsonResponse(["error"=>"invalid email format"], 400);
-                    break;
-                case "minLength":
-                    switch($result->getFirstError()->dataPointer()[0]){
-                        case "password":
-                            return new JsonResponse(["error"=>"password is too short"], 400);
-                            break;
-                        case "date_of_birth":
-                            return new JsonResponse(["error"=>"date of birth has wrong format"], 400);
-                            break;
-                        }
-                    break;
-                case "maxLength":
-                    switch($result->getFirstError()->dataPointer()[0]){
-                        case "password":
-                            return new JsonResponse(["error"=>"password is too long"], 400);
-                            break;
-                        case "date_of_birth":
-                            return new JsonResponse(["error"=>"date of birth has wrong format"], 400);
-                            break;
-                        case "email":
-                            return new JsonResponse(["error"=>"email is too long"], 400);
-                            break;
-                        case "name":
-                            return new JsonResponse(["error"=>"name is too long"], 400);
-                            break;
-                        case "surname":
-                            return new JsonResponse(["error"=>"surname is too long"], 400);
-                            break;
-                    }
-
-                    break;
-                case "required":
-                    switch ($result->getFirstError()->keywordArgs()["missing"]) {
-                        case "password":
-                            return new JsonResponse(["error"=>"password is missing"], 400);
-                            break;
-                        case "email":
-                            return new JsonResponse(["error"=>"email is missing"], 400);
-                            break;
-                        case "name":
-                            return new JsonResponse(["error"=>"name is missing"], 400);
-                            break;
-                        case "surname":
-                            return new JsonResponse(["error"=>"surname is missing"], 400);
-                            break;
-                        case "date_of_birth":
-                            return new JsonResponse(["error"=>"date of birth is missing"], 400);
-                            break;
-                        case "gender":
-                            return new JsonResponse(["error"=>"gender is missing"], 400);
-                            break;
-                    }
-            }
+            return $result;
         }
 
     }
     /**
-     * @Route("/remove/{id}", methods={"DELETE"})
+     * @Route("/account", methods={"DELETE"})
      */
     public function remove(string $id){
         $em = $this->getDoctrine()->getManager();
