@@ -80,6 +80,9 @@ class PostController extends AbstractController
             $author_id = $reqData['author_uuid'];
             $post = new Post();
             $author = $this->getDoctrine()->getRepository(User::class)->find($author_id);
+            if(!$author){
+                return new JsonResponse(["error"=> "user with this id does not exist!"], 404);
+            }
             $post->setAuthor($author);
             if(array_key_exists('text', $reqData)||array_key_exists('img', $reqData)){
                 if(array_key_exists('text', $reqData)){
@@ -93,6 +96,8 @@ class PostController extends AbstractController
                 return new JsonResponse(["error"=> "text or image required!"], 400);
             }
             $post->setCreatedAt(new DateTime("now"));
+            $post->setLikeCount(0);
+            $post->setCommentCount(0);
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
             $resData = $serializer->serialize($post, "json",['ignored_attributes' => ['usPosts', "transitions", "password", "salt", "dateOfBirth", "roles"]]);
             $em = $this->getDoctrine()->getManager();

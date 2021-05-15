@@ -69,14 +69,22 @@ class CommentController extends AbstractController
             $comment = new Comment();
             $author = $this->getDoctrine()->getRepository(User::class)->find($reqData['author_uuid']);
             $post = $this->getDoctrine()->getRepository(Post::class)->find($reqData['post_uuid']);
+            if(!$author){
+                return new JsonResponse(["error"=> "user with this id does not exist!"], 404);
+            }
+            if(!$post){
+                return new JsonResponse(["message"=>"Post does not exist"], 404);
+            }
             $comment->setAuthor($author);
             $comment->setPost($post);
             $comment->setText($reqData['text']);
             $comment->setCreatedAt(new DateTime("now"));
+            $post->setCommentCount($post->getCommentCount()+1);
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
             $resData = $serializer->serialize($comment, "json",['ignored_attributes' => ['usPosts', "transitions", "password", "salt", "dateOfBirth", "roles", "email", "username","gender","post"]]);
             $em = $this->getDoctrine()->getManager();
             $em->persist($comment);
+            $em->persist($post);
             $em->flush();
             return JsonResponse::fromJsonString($resData, 201);
         }
@@ -120,7 +128,10 @@ class CommentController extends AbstractController
             dump($comment);
             return new JsonResponse(["message"=>"Comment does not exist"], 404);
         }
+        $post = $comment->getPost();
+        $post->setCommentCount($post->getCommentCount()-1);
         $em->remove($comment);
+        $em->persist($post);
         $em->flush();
         return new JsonResponse(["message"=>"Comment has been deleted"], 200);
     }

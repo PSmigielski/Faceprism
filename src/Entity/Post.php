@@ -50,6 +50,16 @@ class Post
      */
     private $po_comments;
 
+    /**
+     * @ORM\Column(type="integer")
+     */
+    private $po_like_count;
+
+    /**
+     * @ORM\Column(type="integer")
+     */
+    private $po_comment_count;
+
     public function __construct()
     {
         $this->po_comments = new ArrayCollection();
@@ -146,6 +156,30 @@ class Post
                 $poComment->setPost(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getLikeCount(): ?int
+    {
+        return $this->po_like_count;
+    }
+
+    public function setLikeCount(int $po_like_count): self
+    {
+        $this->po_like_count = $po_like_count;
+
+        return $this;
+    }
+
+    public function getCommentCount(): ?int
+    {
+        return $this->po_comment_count;
+    }
+
+    public function setCommentCount(int $po_comment_count): self
+    {
+        $this->po_comment_count = $po_comment_count;
 
         return $this;
     }

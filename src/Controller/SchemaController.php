@@ -91,6 +91,9 @@ class SchemaController extends AbstractController
                     case "date_of_birth":
                         return new JsonResponse(["error"=>"date of birth has wrong format"], 400);
                         break;
+                    case "author_uuid":
+                        return new JsonResponse(["error"=>"author uuid has wrong fromat"], 400);
+                        break;
                     }
                 break;
             case "required":
