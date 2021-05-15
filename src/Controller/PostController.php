@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Post;
 use App\Entity\User;
+use App\Controller\SchemaController;
 use App\Repository\PostRepository;
 use DateTime;
 use Opis\JsonSchema\Schema;
@@ -70,26 +71,28 @@ class PostController extends AbstractController
     /**
      * @Route("", name="add_post", methods={"POST"})
      */
-    public function create(Request $request):JsonResponse
+    public function create(Request $request, SchemaController $schemaController):JsonResponse
     {
         $reqData = [];
         if($content = $request->getContent()){
             $reqData=json_decode($content, true);
         }
-        $schema = Schema::fromJsonString(file_get_contents(__DIR__.'/../Schemas/postSchema.json'));
-        $validator = new Validator();
-        $object = (object)$reqData;
-        $result = $validator->schemaValidation((object)$object, $schema);
-        if($result->isValid()){
+        $result = $schemaController->validateSchema('/../Schemas/postSchema.json', (object) $reqData);
+        if($result === true){
             $author_id = $reqData['author_uuid'];
             $post = new Post();
             $author = $this->getDoctrine()->getRepository(User::class)->find($author_id);
             $post->setAuthor($author);
-            if(array_key_exists('text', $reqData)){
-                $post->setText($reqData['text']);
+            if(array_key_exists('text', $reqData)||array_key_exists('img', $reqData)){
+                if(array_key_exists('text', $reqData)){
+                    $post->setText($reqData['text']);
+                }
+                if(array_key_exists('img', $reqData)){
+                    $post->setImage($reqData['img']);
+                }
             }
-            if(array_key_exists('img', $reqData)){
-                $post->setImage($reqData['img']);
+            else{
+                return new JsonResponse(["error"=> "text or image required!"], 400);
             }
             $post->setCreatedAt(new DateTime("now"));
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
@@ -100,63 +103,42 @@ class PostController extends AbstractController
             return JsonResponse::fromJsonString($resData, 201);
         }
         else{
-            switch($result->getFirstError()->keyword()){
-                case "maxLength":
-                    switch($result->getFirstError()->dataPointer()[0]){
-                        case "text":
-                            return new JsonResponse(["error"=>"text is too long"], 400);
-                            break;
-                    }
-                    break;
-                case "required":
-                    switch ($result->getFirstError()->keywordArgs()["missing"]) {
-                        case "author_uuid":
-                            return new JsonResponse(["error"=>"author uuid is missing"], 400);
-                            break;
-                    }
-                    break;
-            }
+            return $result;
         }
     }
     /**
      * @Route("/{id}", name="edit_comment", methods={"PUT"})
      */
-    public function edit(Request $request, string $id)
+    public function edit(Request $request, string $id, SchemaController $schemaController)
     {
         $reqData = [];
         if($content = $request->getContent()){
             $reqData=json_decode($content, true);
         }
-        $schema = Schema::fromJsonString(file_get_contents(__DIR__.'/../Schemas/editPostSchema.json'));
-        $validator = new Validator();
-        $object = (object)$reqData;
-        $result = $validator->schemaValidation((object)$object, $schema);
-        if($result->isValid()){
+        $result = $schemaController->validateSchema('/../Schemas/editPostSchema.json', (object) $reqData);
+        if($result===true){
             $em = $this->getDoctrine()->getManager();
             $post = $em->getRepository(Post::class)->find($id);
             if(!$post){
                 return new JsonResponse(["message"=>"Post does not exist"], 404);
             }
-            if(array_key_exists('text', $reqData)){
-                $text = $reqData['text'];
-                $post->setText($text);
+            if(array_key_exists('text', $reqData)||array_key_exists('img', $reqData)){
+                if(array_key_exists('text', $reqData)){
+                    $post->setText($reqData['text']);
+                }
+                if(array_key_exists('img', $reqData)){
+                    $post->setImage($reqData['img']);
+                }
             }
-            if(array_key_exists('img', $reqData)){
-                $img = $reqData['img'];
-                $post->setImage($img);
+            else{
+                return new JsonResponse(["error"=> "text or image required!"], 400);
             }
             $em->persist($post);
             $em->flush();
             return new JsonResponse(["message"=>"Post has been edited"], 200);
         }
         else{
-            switch($result->getFirstError()->keyword()){
-                case "maxLength":
-                    switch($result->getFirstError()->dataPointer()[0]){
-                        case "text":
-                            return new JsonResponse(["error"=>"text is too long"], 400);
-                    }
-            }
+            return $result;
         }
     }
     /**
