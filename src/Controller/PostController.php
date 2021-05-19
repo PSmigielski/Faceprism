@@ -20,7 +20,7 @@ use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 
 /**
- * @Route("/v1/api/posts")
+ * @Route("/v1/api/posts", defaults={"_is_api": true})
  * 
  */
 class PostController extends AbstractController

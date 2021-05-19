@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
     /**
-     * @Route("/v1/api/like")
+     * @Route("/v1/api/like", defaults={"_is_api": true})
      */
 class LikeController extends AbstractController
 {   

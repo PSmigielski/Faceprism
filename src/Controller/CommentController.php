@@ -21,7 +21,7 @@ use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 
     /**
-     * @Route("/v1/api/comments", name="comment")
+     * @Route("/v1/api/comments", defaults={"_is_api": true})
      */
 class CommentController extends AbstractController
 {

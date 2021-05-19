@@ -15,7 +15,7 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 /**
- * @Route("/v1/api/auth", methods={"POST"})
+ * @Route("/v1/api/auth", methods={"POST"}, defaults={"_is_api": true})
  */
 class AuthController extends AbstractController
 {
