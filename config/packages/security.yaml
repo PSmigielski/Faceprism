@@ -28,6 +28,10 @@ security:
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
                 username_path: email
                 password_path: password
+        register:
+            pattern: ^/v1/api/auth/register
+            stateless: true
+            anonymous: true
         api:
             pattern:   ^/v1/api
             stateless: true
