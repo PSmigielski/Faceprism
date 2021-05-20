@@ -1,0 +1,10 @@
+@import '../../components/Navbar/index.scss';
+
+.Feed{
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+    width: 100vw;
+    min-height: 100vh;
+}
