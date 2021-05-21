@@ -4,12 +4,15 @@ namespace App\Controller;
 use App\Entity\User;
 use DateInterval;
 use DateTime;
+use Gesdinet\JWTRefreshTokenBundle\Entity\RefreshToken;
+use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -22,7 +25,7 @@ class AuthController extends AbstractController
     /**
      * @Route("/login")
      */
-    public function login(Request $req,JWTTokenManagerInterface $JWT): JsonResponse
+    public function login(Request $req): JsonResponse
     {
         $user = new User();
         $reqData = [];
@@ -91,4 +94,28 @@ class AuthController extends AbstractController
         return new JsonResponse(["message"=>"User has been deleted"], 201);
     }
     //add token refresh method
+    /**
+     * @Route("/logout", methods={"POST"})
+     */
+    public function logout(Request $request, JWTEncoderInterface $token)
+    {
+        $decodedToken = $token->decode($request->cookies->get("BEARER"));
+        $em = $this->getDoctrine()->getManager();
+        $refToken = $em->getRepository(RefreshToken::class)->findBy(["username" =>  $decodedToken["username"]]);
+        if(gettype($refToken) == "array"){
+            foreach($refToken as $token){
+                $em->remove($token);
+                $em->flush();    
+            }
+        }
+        else{
+            $em->remove($refToken);
+            $em->flush();
+        }
+        $response = new JsonResponse(["message" => "successfully logged out"]);
+        $response->headers->clearCookie("BEARER");
+        $response->headers->clearCookie("REFRESH_TOKEN");
+        return $response;
+        //dump($refToken); die;
+    }
 }
