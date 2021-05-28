@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Friend;
 use App\Entity\FriendRequest;
 use App\Entity\User;
 use App\Repository\FriendRequestRepository;
@@ -64,20 +65,58 @@ class FriendRequestController extends AbstractController
         if($result === true){
             $em = $this->getDoctrine()->getManager();
             $fr_req = new FriendRequest();
+            if($reqData['userID']===$reqData['friendID']){
+                return new JsonResponse(["error" => "You can't request yourself!"],400);
+            }
             $user = $em->getRepository(User::class)->find($reqData['userID']);
             $friend = $em->getRepository(User::class)->find($reqData['friendID']);
             if(!$user || !$friend){
-                return new JsonResponse("User with this id does not exist!", 404);
+                return new JsonResponse(["error" => "User with this id does not exist!"], 404);
             }
-            $fr_req->setUser($user);
-            $fr_req->setFriend($friend);
-            $fr_req->setRequestDate(new DateTime("now"));
-            $fr_req->setAccepted(false);
-            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($fr_req, "json",['ignored_attributes' => ['usPosts', "transitions", "password", "salt", "dateOfBirth", "roles"]]);
-            $em->persist($fr_req);
+            $tempFriend = $em->getRepository(Friend::class)->findBy([
+                "fr_user" => $user,
+                "fr_friend" => $friend
+            ]);
+            $tempReq = $em->getRepository(FriendRequest::class)->findBy([
+                "fr_req_user" => $user,
+                "fr_req_friend" => $friend
+            ]);
+            if($tempFriend){
+                return new JsonResponse(["error" => "You have this pearson in friends!"], 400);
+            }
+            if(!$tempReq){
+                $fr_req->setUser($user);
+                $fr_req->setFriend($friend);
+                $fr_req->setRequestDate(new DateTime("now"));
+                $fr_req->setAccepted(false);
+                $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+                $resData = $serializer->serialize($fr_req, "json",['ignored_attributes' => ['usPosts', "transitions", "password", "salt", "dateOfBirth", "roles"]]);
+                $em->persist($fr_req);
+                $em->flush();
+                return JsonResponse::fromJsonString($resData, 201);
+            }else{
+                return new JsonResponse(["error" => "request with this friend exist!"], 400);
+            }
+
+        }
+    }
+    /**
+     * @Route("/accept/{requestID}", methods={"POST"})
+     */
+    public function accept(Request $req, string $requestID){
+        $em = $this->getDoctrine()->getManager();
+        $fr_req = $em->getRepository(FriendRequest::class)->find($requestID);
+        if($fr_req){
+            $friend = new Friend();
+            $friend->setFriend($fr_req->getFriend());
+            $friend->setUser($fr_req->getUser());
+            $friend->setAcceptDate(new Datetime('now'));
+            $em->remove($fr_req);
+            $em->persist($friend);
             $em->flush();
-            return JsonResponse::fromJsonString($resData, 201);
+            return new JsonResponse(["message" => "friend added successfully!"], 201);
+        }else{
+            return new JsonResponse(["error" => "request with this id does not exist!"], 404);
         }
     }
 }

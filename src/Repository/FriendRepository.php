@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Friend;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -17,6 +18,10 @@ class FriendRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Friend::class);
+    }
+    public function getAllFriends(string $userID):QueryBuilder
+    {
+        return $this->createQueryBuilder('fr')->where('fr.fr_user = :id')->setParameter('id', $userID);
     }
 
     // /**

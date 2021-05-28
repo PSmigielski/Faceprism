@@ -29,31 +29,48 @@ class Friend
      */
     private $fr_friend;
 
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $fr_accept_date;
+
     public function getId(): ?string
     {
         return $this->fr_id;
     }
 
-    public function getFrUser(): ?User
+    public function getUser(): ?User
     {
         return $this->fr_user;
     }
 
-    public function setFrUser(?User $fr_user): self
+    public function setUser(?User $fr_user): self
     {
         $this->fr_user = $fr_user;
 
         return $this;
     }
 
-    public function getFrFriend(): ?User
+    public function getFriend(): ?User
     {
         return $this->fr_friend;
     }
 
-    public function setFrFriend(?User $fr_friend): self
+    public function setFriend(?User $fr_friend): self
     {
         $this->fr_friend = $fr_friend;
+
+        return $this;
+    }
+
+    public function getAcceptDate(): ?\DateTimeInterface
+    {
+        return $this->fr_accept_date;
+    }
+
+    public function setAcceptDate(\DateTimeInterface $fr_accept_date): self
+    {
+        $this->fr_accept_date = $fr_accept_date;
 
         return $this;
     }
