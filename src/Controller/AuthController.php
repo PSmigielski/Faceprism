@@ -2,17 +2,13 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use DateInterval;
 use DateTime;
 use Gesdinet\JWTRefreshTokenBundle\Entity\RefreshToken;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
-use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -46,7 +42,8 @@ class AuthController extends AbstractController
     /**
      * @Route("/register")
      */
-    public function add(Request $req,SchemaController $schemaController, UserPasswordEncoderInterface $passEnc):JsonResponse{  
+    public function add(Request $req,SchemaController $schemaController, UserPasswordEncoderInterface $passEnc):JsonResponse
+    {  
         $reqData = [];
         if($content = $req->getContent()){
             $reqData=json_decode($content, true);
@@ -83,7 +80,7 @@ class AuthController extends AbstractController
     /**
      * @Route("/account", methods={"DELETE"})
      */
-    public function remove(string $id){
+    public function remove(string $id) : JsonResponse{
         $em = $this->getDoctrine()->getManager();
         $user = $em->getRepository(User::class)->find($id);
         if(!$user){
@@ -97,7 +94,7 @@ class AuthController extends AbstractController
     /**
      * @Route("/logout", methods={"POST"})
      */
-    public function logout(Request $request, JWTEncoderInterface $token)
+    public function logout(Request $request, JWTEncoderInterface $token) : JsonResponse
     {
         $decodedToken = $token->decode($request->cookies->get("BEARER"));
         $em = $this->getDoctrine()->getManager();
