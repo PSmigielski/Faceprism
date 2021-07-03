@@ -18,4 +18,5 @@ yarn-error.log
 
 ###> lexik/jwt-authentication-bundle ###
 /config/jwt/*.pem
+/composer.lock
 ###< lexik/jwt-authentication-bundle ###
