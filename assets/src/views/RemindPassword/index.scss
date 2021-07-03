@@ -1,0 +1,23 @@
+@import '../../components/RemindPasswordForm/index.scss';
+.remindPasswordWrapper{
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 35% 30% 35%;
+    grid-template-rows: 35% 40% 25%;
+    .arrowLink{
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        grid-row: 1/2;
+        grid-column: 1/2;
+        margin: 15px 0px 0px 20px;
+    }
+    .logo{
+        grid-row: 1/2;
+        grid-column: 2/3;
+        margin: auto;
+    }
+}

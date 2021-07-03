@@ -2,12 +2,10 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
-use Opis\JsonSchema\{
-    Validator, ValidationResult, ValidationError, Schema
-};
+use DateTime;
+use Gesdinet\JWTRefreshTokenBundle\Entity\RefreshToken;
+use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
@@ -15,92 +13,106 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
-
+/**
+ * @Route("/v1/api/auth", methods={"POST"}, defaults={"_is_api": true})
+ */
 class AuthController extends AbstractController
 {
     /**
-     * @Route("/v1/api/auth/login", methods={"POST"})
+     * @Route("/login")
      */
-    public function login(Request $req,JWTTokenManagerInterface $JWT): JsonResponse
+    public function login(Request $req): JsonResponse
     {
         $user = new User();
         $reqData = [];
         if($content = $req->getContent()){
             $reqData=json_decode($content, true);
         }
-        if(isset($reqData['email'])){
-            if(isset($reqData['password'])){
-                $email = $reqData['email'];
-                $user->setEmail($email);
-                $user->getId();
-                $res = 
-                new JsonResponse([
-                    "data"=>[
-                        "id" => $this->getUser()->getId(),
-                        "email" => $this->getUser()->getEmail(),
-                        "roles" => $this->getUser()->getRoles()
-                    ]
-                ],200);
-                $res->headers->setCookie(Cookie::create('token',$JWT->create($user), strtotime('Fri, 20-May-2044 15:25:52 GMT'),'/',null,null,true,false));
-                return $res;
-
-            }else{
-                return new JsonResponse(["error"=>"invalid data"], 400);
-            }
-        }else{
-            return new JsonResponse(["error"=>"invalid data"], 400);
-        }
-
+        $user->setEmail($reqData['email']);
+        $user->getId();
+        $res = new JsonResponse([
+            "data"=>[
+                "id" => $this->getUser()->getId(),
+                "email" => $this->getUser()->getEmail(),
+                "roles" => $this->getUser()->getRoles()
+            ]
+        ],200);
+        return $res;
     }
     /**
-     * @Route("/v1/api/auth/register", methods={"POST"})
+     * @Route("/register")
      */
-    public function add(Request $req, UserPasswordEncoderInterface $passEnc){
+    public function add(Request $req,SchemaController $schemaController, UserPasswordEncoderInterface $passEnc):JsonResponse
+    {  
         $reqData = [];
         if($content = $req->getContent()){
             $reqData=json_decode($content, true);
         }
-        $schema = Schema::fromJsonString(file_get_contents(__DIR__.'/../Schemas/registerSchema.json'));
-        $validator = new Validator();
-        $result = $validator->schemaValidation((object)$reqData, $schema);
-        if($result->isValid()){
-            $email = $reqData['email'];
-            $passwd = $reqData['password'];
+        $result = $schemaController->validateSchema('/../Schemas/registerSchema.json', (object)$reqData);
+        if($result === true){
             $user = new User();
-            $passwordEncoder = $passEnc;
-            $user->setEmail($email);
-            $user->setPassword($passwordEncoder->encodePassword($user, $passwd));
-            $user->setRoles([]);
-            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($user, "json");
             $em = $this->getDoctrine()->getManager();
-            $em->persist($user);
-            $em->flush();
-            return JsonResponse::fromJsonString($resData, 201);
-        }
-        else{
-            switch($result->getFirstError()->keyword()){
-                case "format":
-                    return new JsonResponse(["error"=>"invalid email format"], 400);
-                    break;
-                case "minLength":
-                    return new JsonResponse(["error"=>"password is too short"], 400);
-                    break;
-                case "maxLength":
-                    return new JsonResponse(["error"=>"password is too long"], 400);
-                    break;
-                case "required":
-                    switch ($result->getFirstError()->keywordArgs()["missing"]) {
-                        case "password":
-                            return new JsonResponse(["error"=>"password is missing"], 400);
-                            break;
-                        
-                        case "email":
-                            return new JsonResponse(["error"=>"email is missing"], 400);
-                            break;
-                    }
+            if(!$em->getRepository(User::class)->findOneBy(["us_email" => $reqData['email']])){
+                $user->setEmail($reqData['email']);
+                $user->setPassword($passEnc->encodePassword($user, $reqData['password']));
+                if(!$schemaController->verifyDate($reqData['date_of_birth'])){
+                    return new JsonResponse(["error"=>"invalid date"], 400);
+                }
+                $user->setDateOfBirth(new DateTime($reqData['date_of_birth']));
+                $user->setGender($reqData['gender']);
+                $user->setName($reqData['name']);
+                $user->setSurname( $reqData['surname']);
+                $user->setRoles([]);
+                $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+                $resData = $serializer->serialize($user, "json",['ignored_attributes' => ['usPosts', "transitions"]]);
+                $em->persist($user);
+                $em->flush();
+                return JsonResponse::fromJsonString($resData, 201);         
+            }else{
+                return new JsonResponse(["error"=>"user with this email exist!"], 400);
             }
         }
+        else{
+            return $result;
+        }
 
+    }
+    /**
+     * @Route("/account", methods={"DELETE"})
+     */
+    public function remove(string $id) : JsonResponse{
+        $em = $this->getDoctrine()->getManager();
+        $user = $em->getRepository(User::class)->find($id);
+        if(!$user){
+            return new JsonResponse(["error" => "User with this id does not exist!"], 404);
+        }
+        $em->remove($user);
+        $em->flush();
+        return new JsonResponse(["message"=>"User has been deleted"], 201);
+    }
+    //add token refresh method
+    /**
+     * @Route("/logout", methods={"POST"})
+     */
+    public function logout(Request $request, JWTEncoderInterface $token) : JsonResponse
+    {
+        $decodedToken = $token->decode($request->cookies->get("BEARER"));
+        $em = $this->getDoctrine()->getManager();
+        $refToken = $em->getRepository(RefreshToken::class)->findBy(["username" =>  $decodedToken["username"]]);
+        if(gettype($refToken) == "array"){
+            foreach($refToken as $token){
+                $em->remove($token);
+                $em->flush();    
+            }
+        }
+        else{
+            $em->remove($refToken);
+            $em->flush();
+        }
+        $response = new JsonResponse(["message" => "successfully logged out"]);
+        $response->headers->clearCookie("BEARER");
+        $response->headers->clearCookie("REFRESH_TOKEN");
+        return $response;
+        //dump($refToken); die;
     }
 }

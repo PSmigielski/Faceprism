@@ -7,19 +7,24 @@
         "php": ">=7.2.5",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "babdev/pagerfanta-bundle": "^3.2",
         "composer/package-versions-deprecated": "1.11.99.1",
         "doctrine/annotations": "^1.0",
         "doctrine/doctrine-bundle": "^2.2",
         "doctrine/doctrine-migrations-bundle": "^3.0",
         "doctrine/orm": "^2.8",
+        "gesdinet/jwt-refresh-token-bundle": "^0.12.0",
         "lexik/jwt-authentication-bundle": "^2.10",
         "opis/json-schema": "^1.0",
+        "pagerfanta/doctrine-orm-adapter": "^3.1",
         "phpdocumentor/reflection-docblock": "^5.2",
         "sensio/framework-extra-bundle": "^5.6",
         "symfony/console": "5.2.*",
         "symfony/dotenv": "5.2.*",
         "symfony/flex": "^1.3.1",
         "symfony/framework-bundle": "5.2.*",
+        "symfony/google-mailer": "5.2.*",
+        "symfony/mailer": "5.2.*",
         "symfony/property-access": "5.2.*",
         "symfony/property-info": "5.2.*",
         "symfony/proxy-manager-bridge": "5.2.*",
@@ -28,6 +33,7 @@
         "symfony/uid": "5.2.*",
         "symfony/webpack-encore-bundle": "^1.9",
         "symfony/yaml": "5.2.*",
+        "symfonycasts/reset-password-bundle": "^1.8",
         "twig/extra-bundle": "^2.12|^3.0",
         "twig/twig": "^2.12|^3.0"
     },
@@ -75,6 +81,8 @@
         }
     },
     "require-dev": {
-        "symfony/maker-bundle": "^1.28"
+        "symfony/maker-bundle": "^1.28",
+        "symfony/stopwatch": "^5.2",
+        "symfony/web-profiler-bundle": "^5.2"
     }
 }
