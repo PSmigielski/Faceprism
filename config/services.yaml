@@ -37,3 +37,8 @@ services:
 
     App\EventListener\RefreshedTokenListener:
         arguments: ['%gesdinet_jwt_refresh_token.ttl%']
+    
+    App\EventSubscriber\UserCreateSubscriber:
+        tags:
+            - { name: kernel.event_subscriber, event: user.create }
+            
