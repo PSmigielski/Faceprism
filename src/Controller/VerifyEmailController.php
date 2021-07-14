@@ -4,8 +4,6 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Entity\VerifyEmailRequest;
-use DateInterval;
-use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,11 +15,12 @@ class VerifyEmailController extends AbstractController
 {   
     public function add(EntityManagerInterface $em, User $user) : VerifyEmailRequest
     {
-        $dateTime= new DateTime("now");
+        $requestTime= new \DateTime();
+        $expTime = (new \DateTime())->add(new \DateInterval("PT1H"));
         $verRequest = new VerifyEmailRequest();
         $verRequest->setUser($user);
-        $verRequest->setRequestedAt($dateTime);
-        $verRequest->setExpiresAt($dateTime->add(new DateInterval("PT1H")));
+        $verRequest->setRequestedAt($requestTime);
+        $verRequest->setExpiresAt($expTime);
         $em->persist($verRequest);
         $em->flush();
         return $verRequest;
