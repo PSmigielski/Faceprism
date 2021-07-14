@@ -227,12 +227,12 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getUsVerified(): ?bool
+    public function getVerified(): ?bool
     {
         return $this->us_verified;
     }
 
-    public function setUsVerified(bool $us_verified): self
+    public function setVerified(bool $us_verified): self
     {
         $this->us_verified = $us_verified;
 
