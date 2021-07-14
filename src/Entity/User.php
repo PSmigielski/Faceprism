@@ -61,6 +61,11 @@ class User implements UserInterface
      */
     private $us_posts;
 
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $us_verified;
+
     public function __construct()
     {
         $this->us_posts = new ArrayCollection();
@@ -218,6 +223,18 @@ class User implements UserInterface
                 $usPost->setAuthor(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getUsVerified(): ?bool
+    {
+        return $this->us_verified;
+    }
+
+    public function setUsVerified(bool $us_verified): self
+    {
+        $this->us_verified = $us_verified;
 
         return $this;
     }
