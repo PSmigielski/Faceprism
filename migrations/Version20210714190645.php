@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20210714130527 extends AbstractMigration
+final class Version20210714190645 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -28,7 +28,7 @@ final class Version20210714130527 extends AbstractMigration
         $this->addSql('CREATE TABLE refresh_tokens (id INT AUTO_INCREMENT NOT NULL, refresh_token VARCHAR(128) NOT NULL, username VARCHAR(255) NOT NULL, valid DATETIME NOT NULL, UNIQUE INDEX UNIQ_9BACE7E1C74F2195 (refresh_token), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE reset_password_request (id INT AUTO_INCREMENT NOT NULL, user CHAR(36) NOT NULL COMMENT \'(DC2Type:guid)\', selector VARCHAR(20) NOT NULL, hashed_token VARCHAR(100) NOT NULL, requested_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\', expires_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\', INDEX IDX_7CE748A8D93D649 (user), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE user (us_id CHAR(36) NOT NULL COMMENT \'(DC2Type:guid)\', us_email VARCHAR(180) NOT NULL, us_roles LONGTEXT NOT NULL COMMENT \'(DC2Type:json)\', us_password VARCHAR(255) NOT NULL, us_name VARCHAR(30) NOT NULL, us_surname VARCHAR(100) NOT NULL, us_date_of_birth DATE NOT NULL, us_gender VARCHAR(20) NOT NULL, us_verified TINYINT(1) NOT NULL, UNIQUE INDEX UNIQ_8D93D649807ABB60 (us_email), PRIMARY KEY(us_id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-        $this->addSql('CREATE TABLE verify_email_request (ver_id CHAR(36) NOT NULL COMMENT \'(DC2Type:guid)\', ver_user_id CHAR(36) NOT NULL COMMENT \'(DC2Type:guid)\', ver_requested_at DATETIME NOT NULL, ver_expires_at DATETIME NOT NULL, UNIQUE INDEX UNIQ_2D9F91E7228FE0BA (ver_user_id), PRIMARY KEY(ver_id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
+        $this->addSql('CREATE TABLE verify_email_request (ver_id CHAR(36) NOT NULL COMMENT \'(DC2Type:guid)\', ver_user_id CHAR(36) NOT NULL COMMENT \'(DC2Type:guid)\', ver_requested_at DATETIME NOT NULL, ver_expires_at DATETIME NOT NULL, INDEX IDX_2D9F91E7228FE0BA (ver_user_id), PRIMARY KEY(ver_id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('ALTER TABLE comment ADD CONSTRAINT FK_9474526C53DCFBED FOREIGN KEY (co_author) REFERENCES user (us_id)');
         $this->addSql('ALTER TABLE comment ADD CONSTRAINT FK_9474526C1F1DDF02 FOREIGN KEY (co_post) REFERENCES post (po_id)');
         $this->addSql('ALTER TABLE comment ADD CONSTRAINT FK_9474526CA824B40D FOREIGN KEY (co_reply_to) REFERENCES comment (co_id)');

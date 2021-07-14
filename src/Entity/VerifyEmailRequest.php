@@ -18,7 +18,7 @@ class VerifyEmailRequest
     private $ver_id;
 
     /**
-     * @ORM\OneToOne(targetEntity=User::class, cascade={"persist", "remove"})
+     * @ORM\ManyToOne(targetEntity=User::class)
      * @ORM\JoinColumn(referencedColumnName = "us_id",nullable=false)
      */
     private $ver_user;

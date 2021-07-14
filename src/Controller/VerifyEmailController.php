@@ -67,8 +67,8 @@ class VerifyEmailController extends AbstractController
                 $em->persist($user);
                 $em->remove($verRequest);
                 $em->flush();
+                return new JsonResponse(["message" => "account has been verififed. You can login now to your account!"],200);
             }
-        return new JsonResponse(["message" => "account has been verififed. You can login now to your account!"],200);
         }
     }
 }
