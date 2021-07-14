@@ -2,9 +2,11 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Event\UserCreateEvent;
 use DateTime;
 use Gesdinet\JWTRefreshTokenBundle\Entity\RefreshToken;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +20,12 @@ use Symfony\Component\Serializer\Serializer;
  */
 class AuthController extends AbstractController
 {
+
+    private EventDispatcherInterface $eventDispatcher;
+    public function __construct(EventDispatcherInterface $eventDispatcher)
+    {
+        $this->eventDispatcher = $eventDispatcher;
+    }
     /**
      * @Route("/login")
      */
@@ -42,7 +50,7 @@ class AuthController extends AbstractController
     /**
      * @Route("/register")
      */
-    public function add(Request $req,SchemaController $schemaController, UserPasswordEncoderInterface $passEnc):JsonResponse
+    public function add(Request $req,SchemaController $schemaController, UserPasswordEncoderInterface $passEnc) : JsonResponse
     {  
         $reqData = [];
         if($content = $req->getContent()){
@@ -63,11 +71,14 @@ class AuthController extends AbstractController
                 $user->setName($reqData['name']);
                 $user->setSurname( $reqData['surname']);
                 $user->setRoles([]);
+                $user->setVerified(false);
                 $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-                $resData = $serializer->serialize($user, "json",['ignored_attributes' => ['usPosts', "transitions"]]);
+                $resData = $serializer->serialize($user, "json",['ignored_attributes' => ['usPosts', "transitions","timezone"]]);
                 $em->persist($user);
                 $em->flush();
-                return JsonResponse::fromJsonString($resData, 201);         
+                $response = JsonResponse::fromJsonString($resData, 201);
+                $event = $this->eventDispatcher->dispatch(new UserCreateEvent($user, $response), UserCreateEvent::NAME); 
+                return $event->getResponse();
             }else{
                 return new JsonResponse(["error"=>"user with this email exist!"], 400);
             }
@@ -90,7 +101,6 @@ class AuthController extends AbstractController
         $em->flush();
         return new JsonResponse(["message"=>"User has been deleted"], 201);
     }
-    //add token refresh method
     /**
      * @Route("/logout", methods={"POST"})
      */
@@ -113,6 +123,5 @@ class AuthController extends AbstractController
         $response->headers->clearCookie("BEARER");
         $response->headers->clearCookie("REFRESH_TOKEN");
         return $response;
-        //dump($refToken); die;
     }
 }

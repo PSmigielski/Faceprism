@@ -22,4 +22,11 @@ class ViewController extends AbstractController
     {
         return $this->render('base.html.twig');
     }
+    /**
+     * @Route("/verify", name="react_verify")
+     */
+    public function verify(): Response
+    {
+        return $this->render('base.html.twig');
+    }
 }
