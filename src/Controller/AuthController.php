@@ -29,23 +29,8 @@ class AuthController extends AbstractController
     /**
      * @Route("/login")
      */
-    public function login(Request $req): JsonResponse
+    public function login(Request $req)
     {
-        $user = new User();
-        $reqData = [];
-        if($content = $req->getContent()){
-            $reqData=json_decode($content, true);
-        }
-        $user->setEmail($reqData['email']);
-        $user->getId();
-        $res = new JsonResponse([
-            "data"=>[
-                "id" => $this->getUser()->getId(),
-                "email" => $this->getUser()->getEmail(),
-                "roles" => $this->getUser()->getRoles()
-            ]
-        ],200);
-        return $res;
     }
     /**
      * @Route("/register")

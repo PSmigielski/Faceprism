@@ -29,14 +29,8 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
-
-    App\EventListener\AuthenticationSuccessListener:
-        arguments: ['%lexik_jwt_authentication.token_ttl%', '@doctrine.orm.entity_manager']
-        tags:
-            - { name: kernel.event_listener, event: lexik_jwt_authentication.on_authentication_success, method: onAuthenticationSuccess, priority: -2 }
-
-    App\EventListener\RefreshedTokenListener:
-        arguments: ['%gesdinet_jwt_refresh_token.ttl%']
+    App\EventSubscriber\RefreshedTokenSubscriber:
+        arguments: ['%gesdinet_jwt_refresh_token.ttl%', '%lexik_jwt_authentication.token_ttl%', '@doctrine.orm.entity_manager']
     
     App\EventSubscriber\UserCreateSubscriber:
         tags:
