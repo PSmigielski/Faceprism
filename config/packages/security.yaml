@@ -14,6 +14,10 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false            
+        verify:
+            pattern: ^/v1/api/verify
+            stateless: true
+            anonymous: true
         refresh:
             pattern: ^/v1/api/auth/refresh
             stateless: true
@@ -45,6 +49,7 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: ^/v1/api/auth/login, roles: IS_AUTHENTICATED_ANONYMOUSLY  }
+        - { path: ^/v1/api/verify, roles: IS_AUTHENTICATED_ANONYMOUSLY  }
         - { path: ^/v1/api/auth/register, roles: IS_AUTHENTICATED_ANONYMOUSLY  }
         - { path: ^/v1/api/auth/resetpaswd, roles: IS_AUTHENTICATED_ANONYMOUSLY  }
         - { path: ^/v1/api/auth/refresh, roles: IS_AUTHENTICATED_ANONYMOUSLY }

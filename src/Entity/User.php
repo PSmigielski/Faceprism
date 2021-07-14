@@ -61,6 +61,11 @@ class User implements UserInterface
      */
     private $us_posts;
 
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $us_verified;
+
     public function __construct()
     {
         $this->us_posts = new ArrayCollection();
@@ -195,12 +200,12 @@ class User implements UserInterface
     /**
      * @return Collection|Post[]
      */
-    public function getUsPosts(): Collection
+    public function getPosts(): Collection
     {
         return $this->us_posts;
     }
 
-    public function addUsPost(Post $usPost): self
+    public function addPost(Post $usPost): self
     {
         if (!$this->us_posts->contains($usPost)) {
             $this->us_posts[] = $usPost;
@@ -210,7 +215,7 @@ class User implements UserInterface
         return $this;
     }
 
-    public function removeUsPost(Post $usPost): self
+    public function removePost(Post $usPost): self
     {
         if ($this->us_posts->removeElement($usPost)) {
             // set the owning side to null (unless already changed)
@@ -218,6 +223,18 @@ class User implements UserInterface
                 $usPost->setAuthor(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getVerified(): ?bool
+    {
+        return $this->us_verified;
+    }
+
+    public function setVerified(bool $us_verified): self
+    {
+        $this->us_verified = $us_verified;
 
         return $this;
     }
