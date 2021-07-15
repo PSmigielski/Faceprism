@@ -25,7 +25,7 @@ class ProfileController extends AbstractController
         if(is_null($user)){
             return new JsonResponse(["error"=>"user with this id does not exist!"], 404);
         }else{
-            if(strpos($req->files->get("image")->getMimeType(), 'image') != true){
+            if(strpos($req->files->get("image")->getMimeType(), 'image') !== false){ 
                 $user->setProfilePicUrl($imageUploader->uploadFileToCloudinary($req->files->get("image")));
                 $em->persist($user);
                 $em->flush();
