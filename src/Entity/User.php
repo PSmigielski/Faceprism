@@ -66,6 +66,11 @@ class User implements UserInterface
      */
     private $us_verified;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $us_profile_pic_url;
+
     public function __construct()
     {
         $this->us_posts = new ArrayCollection();
@@ -235,6 +240,18 @@ class User implements UserInterface
     public function setVerified(bool $us_verified): self
     {
         $this->us_verified = $us_verified;
+
+        return $this;
+    }
+
+    public function getUsProfilePicUrl(): ?string
+    {
+        return $this->us_profile_pic_url;
+    }
+
+    public function setUsProfilePicUrl(string $us_profile_pic_url): self
+    {
+        $this->us_profile_pic_url = $us_profile_pic_url;
 
         return $this;
     }
