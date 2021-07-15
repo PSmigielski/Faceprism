@@ -57,6 +57,7 @@ class AuthController extends AbstractController
                 $user->setSurname( $reqData['surname']);
                 $user->setRoles([]);
                 $user->setVerified(false);
+                $user->setProfilePicUrl("https://res.cloudinary.com/faceprism/image/upload/v1626358212/profile_pics/default_zsivrd.png");
                 $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
                 $resData = $serializer->serialize($user, "json",['ignored_attributes' => ['usPosts', "transitions","timezone"]]);
                 $em->persist($user);
