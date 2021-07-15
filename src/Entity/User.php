@@ -244,12 +244,12 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getUsProfilePicUrl(): ?string
+    public function getProfilePicUrl(): ?string
     {
         return $this->us_profile_pic_url;
     }
 
-    public function setUsProfilePicUrl(string $us_profile_pic_url): self
+    public function setProfilePicUrl(string $us_profile_pic_url): self
     {
         $this->us_profile_pic_url = $us_profile_pic_url;
 
