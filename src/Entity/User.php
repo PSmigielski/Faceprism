@@ -71,6 +71,11 @@ class User implements UserInterface
      */
     private $us_profile_pic_url;
 
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $us_banner_url;
+
     public function __construct()
     {
         $this->us_posts = new ArrayCollection();
@@ -252,6 +257,18 @@ class User implements UserInterface
     public function setProfilePicUrl(string $us_profile_pic_url): self
     {
         $this->us_profile_pic_url = $us_profile_pic_url;
+
+        return $this;
+    }
+
+    public function getBannerUrl(): ?string
+    {
+        return $this->us_banner_url;
+    }
+
+    public function setBannerUrl(?string $us_banner_url): self
+    {
+        $this->us_banner_url = $us_banner_url;
 
         return $this;
     }
