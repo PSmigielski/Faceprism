@@ -37,4 +37,29 @@ class ProfileController extends AbstractController
             }
         }
     }
+    /**
+     * @Route("/bio/{userID}", name="change_bio",methods={"PUT"})
+     */
+    public function updateBio(Request $req, string $userID, SchemaController $schemaController): JsonResponse
+    {
+        $em = $this->getDoctrine()->getManager();
+        $user = $em->getRepository(User::class)->find($userID);
+        if(is_null($user)){
+            return new JsonResponse(["error"=>"user with this id does not exist!"], 404);
+        }else{
+            $reqData = [];
+            if($content = $req->getContent()){
+                $reqData=json_decode($content, true);
+            }
+            $result = $schemaController->validateSchema('/../Schemas/profileUpdateBioSchema.json', (object)$reqData);
+            if($result === true){
+                $user->setBio($reqData["bio"]);
+                $em->persist($user);
+                $em->flush();
+                return new JsonResponse(["message" => "bio has been updated"], 201);
+            }else{
+                return $result;
+            }
+        }
+    }
 }
