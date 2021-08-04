@@ -127,6 +127,9 @@ class SchemaController extends AbstractController
                         break;
                 }
                 break;
+            case "minProperties":
+                return new JsonResponse(["error"=>"given properties: ".$result->getFirstError()->keywordArgs()["count"]."; minimum quantity of properties: ".$result->getFirstError()->keywordArgs()["min"]], 400);
+                break;
         }
     }   
 }

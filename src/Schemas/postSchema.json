@@ -1,6 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
+    "minProperties": 2,
     "properties": {
         "author_uuid":{
             "type": "string",
