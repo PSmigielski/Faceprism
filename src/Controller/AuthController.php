@@ -88,6 +88,48 @@ class AuthController extends AbstractController
         return new JsonResponse(["message"=>"User has been deleted"], 201);
     }
     /**
+     * @Route("/account/{userID}", methods={"PUT"})
+     */
+    public function updateAccount(Request $req,SchemaController $schemaController, string $userID,) : JsonResponse{
+        $reqData = [];
+        if($content = $req->getContent()){
+            $reqData=json_decode($content, true);
+        }
+        $result = $schemaController->validateSchema('/../Schemas/editAccountDataSchema.json', (object)$reqData);
+        if($result === true){
+            $em = $this->getDoctrine()->getManager();
+            $user = $em->getRepository(User::class)->find($userID);
+            if(!$user){
+                return new JsonResponse(["error" => "User with this id does not exist!"], 404);
+            }
+            dump($user);
+            foreach ($reqData as $key => $value) {
+                switch($key){
+                    case "email":
+                        $user->setEmail($value);
+                        break;
+                    case "name":
+                        $user->setName($value);
+                        break;
+                    case "surname":
+                        $user->setSurname($value);
+                        break;
+                    case "date_of_birth":
+                        $user->setDateOfBirth($value);
+                        break;
+                    case "gender":
+                        $user->setGender($value);
+                        break;
+                }
+            }
+            dump($user);
+            $em->persist($user);
+            $em->flush();
+            return new JsonResponse(["message"=>"Account data has been modified"], 201);
+        }
+
+    }
+    /**
      * @Route("/logout", methods={"POST"})
      */
     public function logout(Request $request, JWTEncoderInterface $token) : JsonResponse

@@ -26,6 +26,5 @@
             "maxLength": 20
         }
     },
-    "required": ["author_uuid"],
     "additionalProperties": false
 }
