@@ -1,0 +1,31 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "minProperties": 1,
+    "properties": {
+        "email":{
+            "type": "string",
+            "maxLength": 128,
+            "format": "email"
+        },
+        "name":{
+            "type": "string",
+            "maxLength": 30
+        },
+        "surname":{
+            "type": "string",
+            "maxLength": 100
+        },
+        "date_of_birth":{
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 10
+        },
+        "gender":{
+            "type":"string",
+            "maxLength": 20
+        }
+    },
+    "required": ["author_uuid"],
+    "additionalProperties": false
+}
