@@ -19,7 +19,7 @@ class VerifyEmailRequest
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class)
-     * @ORM\JoinColumn(referencedColumnName = "us_id",nullable=false)
+     * @ORM\JoinColumn(referencedColumnName = "us_id",nullable=false, onDelete="CASCADE")
      */
     private $ver_user;
 

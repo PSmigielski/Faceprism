@@ -20,7 +20,7 @@ class Like
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class)
-     * @ORM\JoinColumn(name="li_user",referencedColumnName = "us_id", nullable=false)
+     * @ORM\JoinColumn(name="li_user",referencedColumnName = "us_id", nullable=false,onDelete="CASCADE")
      */
     private $li_user;
 

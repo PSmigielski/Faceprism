@@ -75,11 +75,11 @@ class AuthController extends AbstractController
 
     }
     /**
-     * @Route("/account", methods={"DELETE"})
+     * @Route("/account/{userID}", methods={"DELETE"})
      */
-    public function remove(string $id) : JsonResponse{
+    public function remove(string $userID) : JsonResponse{
         $em = $this->getDoctrine()->getManager();
-        $user = $em->getRepository(User::class)->find($id);
+        $user = $em->getRepository(User::class)->find($userID);
         if(!$user){
             return new JsonResponse(["error" => "User with this id does not exist!"], 404);
         }

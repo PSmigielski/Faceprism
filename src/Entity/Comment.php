@@ -19,7 +19,7 @@ class Comment
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class)
-     * @ORM\JoinColumn(name="co_author",referencedColumnName = "us_id", nullable=false)
+     * @ORM\JoinColumn(name="co_author",referencedColumnName = "us_id", nullable=false,onDelete="CASCADE")
      */
     private $co_author;
 
