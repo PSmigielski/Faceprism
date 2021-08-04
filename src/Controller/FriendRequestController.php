@@ -82,7 +82,7 @@ class FriendRequestController extends AbstractController
                 "fr_req_friend" => $friend
             ]);
             if($tempFriend){
-                return new JsonResponse(["error" => "You have this pearson in friends!"], 400);
+                return new JsonResponse(["error" => "You have this person in friends!"], 400);
             }
             if(!$tempReq){
                 $fr_req->setUser($user);
@@ -103,16 +103,23 @@ class FriendRequestController extends AbstractController
     /**
      * @Route("/accept/{requestID}", methods={"POST"})
      */
-    public function accept(Request $req, string $requestID){
+    public function accept(string $requestID){
         $em = $this->getDoctrine()->getManager();
         $fr_req = $em->getRepository(FriendRequest::class)->find($requestID);
         if($fr_req){
-            $friend = new Friend();
-            $friend->setFriend($fr_req->getFriend());
-            $friend->setUser($fr_req->getUser());
-            $friend->setAcceptDate(new Datetime('now'));
+            $friend1 = new Friend();
+            $friend1->setFriend($fr_req->getFriend());
+            $friend1->setUser($fr_req->getUser());
+            $friend1->setAcceptDate(new Datetime('now'));
+            $friend1->setIsBlocked(false);
+            $friend2 = new Friend();
+            $friend2->setFriend($fr_req->getUser());
+            $friend2->setUser($fr_req->getFriend());
+            $friend2->setAcceptDate(new Datetime('now'));
+            $friend2->setIsBlocked(false);
             $em->remove($fr_req);
-            $em->persist($friend);
+            $em->persist($friend1);
+            $em->persist($friend2);
             $em->flush();
             return new JsonResponse(["message" => "friend added successfully!"], 201);
         }else{
