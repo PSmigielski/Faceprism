@@ -57,6 +57,7 @@ class AuthController extends AbstractController
                 $user->setSurname( $reqData['surname']);
                 $user->setRoles([]);
                 $user->setVerified(false);
+                $user->setProfilePicUrl("https://res.cloudinary.com/faceprism/image/upload/v1626432519/profile_pics/default_bbdyw0.png");
                 $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
                 $resData = $serializer->serialize($user, "json",['ignored_attributes' => ['usPosts', "transitions","timezone"]]);
                 $em->persist($user);
@@ -74,17 +75,59 @@ class AuthController extends AbstractController
 
     }
     /**
-     * @Route("/account", methods={"DELETE"})
+     * @Route("/account/{userID}", methods={"DELETE"})
      */
-    public function remove(string $id) : JsonResponse{
+    public function remove(string $userID) : JsonResponse{
         $em = $this->getDoctrine()->getManager();
-        $user = $em->getRepository(User::class)->find($id);
+        $user = $em->getRepository(User::class)->find($userID);
         if(!$user){
             return new JsonResponse(["error" => "User with this id does not exist!"], 404);
         }
         $em->remove($user);
         $em->flush();
         return new JsonResponse(["message"=>"User has been deleted"], 201);
+    }
+    /**
+     * @Route("/account/{userID}", methods={"PUT"})
+     */
+    public function updateAccount(Request $req,SchemaController $schemaController, string $userID,) : JsonResponse{
+        $reqData = [];
+        if($content = $req->getContent()){
+            $reqData=json_decode($content, true);
+        }
+        $result = $schemaController->validateSchema('/../Schemas/editAccountDataSchema.json', (object)$reqData);
+        if($result === true){
+            $em = $this->getDoctrine()->getManager();
+            $user = $em->getRepository(User::class)->find($userID);
+            if(!$user){
+                return new JsonResponse(["error" => "User with this id does not exist!"], 404);
+            }
+            dump($user);
+            foreach ($reqData as $key => $value) {
+                switch($key){
+                    case "email":
+                        $user->setEmail($value);
+                        break;
+                    case "name":
+                        $user->setName($value);
+                        break;
+                    case "surname":
+                        $user->setSurname($value);
+                        break;
+                    case "date_of_birth":
+                        $user->setDateOfBirth($value);
+                        break;
+                    case "gender":
+                        $user->setGender($value);
+                        break;
+                }
+            }
+            dump($user);
+            $em->persist($user);
+            $em->flush();
+            return new JsonResponse(["message"=>"Account data has been modified"], 201);
+        }
+
     }
     /**
      * @Route("/logout", methods={"POST"})

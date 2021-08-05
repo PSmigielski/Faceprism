@@ -42,7 +42,8 @@ class RefreshedTokenSubscriber implements EventSubscriberInterface {
             $data = [
                 "id" => $user->getId(),
                 "email" => $user->getEmail(),
-                "roles" => $user->getRoles()
+                "roles" => $user->getRoles(),
+                "profile_pic" => $user->getProfilePicUrl()
             ];
             $event->setData($data);
             return $response;

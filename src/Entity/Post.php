@@ -21,7 +21,7 @@ class Post
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="us_posts")
-     * @ORM\JoinColumn(name="po_author",referencedColumnName = "us_id", nullable=false)
+     * @ORM\JoinColumn(name="po_author",referencedColumnName = "us_id", nullable=false, onDelete="CASCADE")
      */
     private $po_author;
 

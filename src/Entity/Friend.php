@@ -19,13 +19,13 @@ class Friend
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class)
-     * @ORM\JoinColumn(name="fr_user",referencedColumnName = "us_id", nullable=false)
+     * @ORM\JoinColumn(name="fr_user",referencedColumnName = "us_id", nullable=false,onDelete="CASCADE")
      */
     private $fr_user;
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class)
-     * @ORM\JoinColumn(name="fr_friend",referencedColumnName = "us_id",nullable=false)
+     * @ORM\JoinColumn(name="fr_friend",referencedColumnName = "us_id",nullable=false,onDelete="CASCADE")
      */
     private $fr_friend;
 
@@ -33,6 +33,11 @@ class Friend
      * @ORM\Column(type="datetime")
      */
     private $fr_accept_date;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $fr_is_blocked;
 
     public function getId(): ?string
     {
@@ -71,6 +76,18 @@ class Friend
     public function setAcceptDate(\DateTimeInterface $fr_accept_date): self
     {
         $this->fr_accept_date = $fr_accept_date;
+
+        return $this;
+    }
+
+    public function getIsBlocked()
+    {
+        return $this->fr_is_blocked;
+    }
+
+    public function setIsBlocked($fr_is_blocked): self
+    {
+        $this->fr_is_blocked = $fr_is_blocked;
 
         return $this;
     }

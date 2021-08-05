@@ -125,13 +125,11 @@ class PostController extends AbstractController
             if(!$post){
                 return new JsonResponse(["message"=>"Post does not exist"], 404);
             }
-            if(array_key_exists('text', $reqData)||array_key_exists('img', $reqData)){
-                if(array_key_exists('text', $reqData)){
-                    $post->setText($reqData['text']);
-                }
-                if(array_key_exists('img', $reqData)){
-                    $post->setImage($reqData['img']);
-                }
+            if(array_key_exists('text', $reqData)){
+                $post->setText($reqData['text']);
+            }
+            if(array_key_exists('img', $reqData)){
+                $post->setImage($reqData['img']);
             }
             else{
                 return new JsonResponse(["error"=> "text or image required!"], 400);

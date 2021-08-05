@@ -19,9 +19,13 @@ class FriendRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Friend::class);
     }
-    public function getAllFriends(string $userID):QueryBuilder
+    public function createGetAllFriends(string $userID):QueryBuilder
     {
-        return $this->createQueryBuilder('fr')->where('fr.fr_user = :id')->setParameter('id', $userID);
+        return $this->createQueryBuilder('fr')->where('fr.fr_user = :id')->andWhere("fr.fr_is_blocked = 0")->setParameter('id', $userID);
+    }
+    public function createGetAllBlockedFriends(string $userID):QueryBuilder
+    {
+        return $this->createQueryBuilder('fr')->where('fr.fr_user = :id')->andWhere("fr.fr_is_blocked = 1")->setParameter('id', $userID);
     }
 
     // /**

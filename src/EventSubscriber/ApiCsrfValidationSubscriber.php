@@ -21,7 +21,7 @@ class ApiCsrfValidationSubscriber implements EventSubscriberInterface
         if (!$request->attributes->get('_is_api')) {
             return;
         }
-        if ($request->headers->get('Content-Type') != 'application/json') {
+        if (strpos($request->headers->get('Content-Type'), 'application/json') !=false || strpos($request->headers->get('Content-Type'), 'multipart/form-data') != false ) {
             $response = new JsonResponse([
                 'message' => 'Invalid Content-Type'
             ], 415);

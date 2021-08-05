@@ -81,6 +81,9 @@ class SchemaController extends AbstractController
                     case "surname":
                         return new JsonResponse(["error"=>"surname is too long"], 400);
                         break;
+                    case "bio":
+                        return new JsonResponse(["error"=>"surname is too long"], 400);
+                    break;
                 }
                 break;
             case "minLength":
@@ -94,6 +97,9 @@ class SchemaController extends AbstractController
                     case "author_uuid":
                         return new JsonResponse(["error"=>"author uuid has wrong fromat"], 400);
                         break;
+                    case "bio":
+                        return new JsonResponse(["error"=>"surname is too short"], 400);
+                    break;
                     }
                 break;
             case "required":
@@ -120,6 +126,9 @@ class SchemaController extends AbstractController
                         return new JsonResponse(["error"=>"surname is too long"], 400);
                         break;
                 }
+                break;
+            case "minProperties":
+                return new JsonResponse(["error"=>"given properties: ".$result->getFirstError()->keywordArgs()["count"]."; minimum quantity of properties: ".$result->getFirstError()->keywordArgs()["min"]], 400);
                 break;
         }
     }   
