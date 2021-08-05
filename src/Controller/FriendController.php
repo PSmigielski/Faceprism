@@ -93,4 +93,35 @@ class FriendController extends AbstractController
             return new JsonResponse(["friend has been removed successfully!"]);
         }
     }
+    /**
+     * @Route("/blocklist", methods={"GET"})
+     */
+    public function get_blocked(FriendRepository $repo, Request $request) : JsonResponse
+    {
+        try{
+            $payload = $request->attributes->get("payload");
+            $page = $request->query->get('page', 1);
+            $qb = $repo->createGetAllBlockedFriends($payload["user_id"]);
+            $adapter = new QueryAdapter($qb);
+            $pagerfanta = new Pagerfanta($adapter);
+            $pagerfanta->setMaxPerPage(30);
+            $pagerfanta->setCurrentPage($page);
+            $requests = array();
+            foreach($pagerfanta->getCurrentPageResults() as $req){
+                $requests[] = $req;
+            } 
+            $data = [
+                "page"=> $page,
+                "totalPages" => $pagerfanta->getNbPages(),
+                "count" => $pagerfanta->getNbResults(),
+                "requests"=> $requests
+            ];
+            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+            $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['usPosts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt", "post", "user"]]);
+            return JsonResponse::fromJsonString($resData, 200);
+        }
+        catch(OutOfRangeCurrentPageException $e){
+            return new JsonResponse(["message"=>"Page not found"], 404);
+        }
+    }
 }
