@@ -28,7 +28,16 @@ services:
         tags: ['controller.service_arguments']
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-
+    acme_api.event.jwt_decoded_listener:
+        class: App\EventListener\JWTDecodedListener
+        arguments: [ '@request_stack' ]
+        tags:
+            - { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_decoded, method: onJWTDecoded }
+    acme_api.event.jwt_created_listener:
+        class: App\EventListener\JWTCreatedListener
+        arguments: [ '@request_stack' ]
+        tags:
+            - { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_created, method: onJWTCreated }
     App\EventSubscriber\RefreshedTokenSubscriber:
         arguments: ['%gesdinet_jwt_refresh_token.ttl%', '%lexik_jwt_authentication.token_ttl%', '@doctrine.orm.entity_manager']
     
