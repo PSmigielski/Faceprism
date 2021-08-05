@@ -21,13 +21,14 @@ use Symfony\Component\Serializer\Serializer;
 class FriendController extends AbstractController
 {
     /**
-     * @Route("/{userID}", methods={"GET"})
+     * @Route("", methods={"GET"})
      */
-    public function index(FriendRepository $repo, Request $request, string $userID) : JsonResponse
+    public function index(FriendRepository $repo, Request $request) : JsonResponse
     {
         try{
+            $payload = $request->attributes->get("payload");
             $page = $request->query->get('page', 1);
-            $qb = $repo->createGetAllFriends($userID);
+            $qb = $repo->createGetAllFriends($payload["user_id"]);
             $adapter = new QueryAdapter($qb);
             $pagerfanta = new Pagerfanta($adapter);
             $pagerfanta->setMaxPerPage(30);
@@ -51,13 +52,38 @@ class FriendController extends AbstractController
         }
     }
     /**
-     * @Route("/{userID}/{friendID}", methods={"DELETE"})
+     * @Route("/{friendID}", methods={"PUT"})
      */
-    public function remove(string $userID, string $friendID) : JsonResponse
+    public function block(Request $req, string $friendID) : JsonResponse
     {
+        $payload = $req->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
-        $friend1 = $em->getRepository(Friend::class)->findBy(["fr_user"=>$userID, "fr_friend"=>$friendID]);
-        $friend2 = $em->getRepository(Friend::class)->findBy(["fr_user"=>$friendID, "fr_friend"=>$userID]);
+        $friend = $em->getRepository(Friend::class)->findBy(["fr_user"=>$payload["user_id"], "fr_friend"=>$friendID]);
+        if(!$friend){
+            return new JsonResponse(["error"=>"this relation does not exist!"], 404);
+        }else{
+            if($friend[0]->getIsBlocked()){
+                $friend[0]->setIsBlocked(false);
+                $em->persist($friend[0]);
+                $em->flush();
+                return new JsonResponse(["friend has been unblocked successfully!"]);
+            }else{
+                $friend[0]->setIsBlocked(true);
+                $em->persist($friend[0]);
+                $em->flush();
+                return new JsonResponse(["friend has been blocked successfully!"]);
+            }
+        }
+    }
+    /**
+     * @Route("/{friendID}", methods={"DELETE"})
+     */
+    public function remove(Request $req, string $friendID) : JsonResponse
+    {
+        $payload = $req->attributes->get("payload");
+        $em = $this->getDoctrine()->getManager();
+        $friend1 = $em->getRepository(Friend::class)->findBy(["fr_user"=>$payload["user_id"], "fr_friend"=>$friendID]);
+        $friend2 = $em->getRepository(Friend::class)->findBy(["fr_user"=>$friendID, "fr_friend"=>$payload["user_id"]]);
         if(!$friend1 || !$friend1){
             return new JsonResponse(["error"=>"this relation does not exist!"], 404);
         }else{

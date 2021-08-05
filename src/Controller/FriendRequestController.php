@@ -95,7 +95,7 @@ class FriendRequestController extends AbstractController
                 $em->flush();
                 return JsonResponse::fromJsonString($resData, 201);
             }else{
-                return new JsonResponse(["error" => "request with this friend exist!"], 400);
+                return new JsonResponse(["error" => "Pending request with this friend exist!"], 400);
             }
 
         }
