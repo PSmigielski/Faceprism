@@ -126,4 +126,18 @@ class FriendRequestController extends AbstractController
             return new JsonResponse(["error" => "request with this id does not exist!"], 404);
         }
     }
+    /**
+     * @Route("/reject/{requestID}", methods={"DELETE"})
+     */
+    public function reject(string $requestID){
+        $em = $this->getDoctrine()->getManager();
+        $fr_req = $em->getRepository(FriendRequest::class)->find($requestID);
+        if($fr_req){
+            $em->remove($fr_req);
+            $em->flush();
+            return new JsonResponse(["message" => "friend request rejected successfully!"], 201);
+        }else{
+            return new JsonResponse(["error" => "request with this id does not exist!"], 404);
+        }
+    }
 }
