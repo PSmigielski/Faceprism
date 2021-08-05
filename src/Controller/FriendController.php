@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Friend;
 use App\Repository\FriendRepository;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
@@ -54,6 +55,16 @@ class FriendController extends AbstractController
      */
     public function remove(string $userID, string $friendID) : JsonResponse
     {
-        return new JsonResponse(["message"]);
+        $em = $this->getDoctrine()->getManager();
+        $friend1 = $em->getRepository(Friend::class)->findBy(["fr_user"=>$userID, "fr_friend"=>$friendID]);
+        $friend2 = $em->getRepository(Friend::class)->findBy(["fr_user"=>$friendID, "fr_friend"=>$userID]);
+        if(!$friend1 || !$friend1){
+            return new JsonResponse(["error"=>"this relation does not exist!"], 404);
+        }else{
+            $em->remove($friend1[0]);
+            $em->remove($friend2[0]);
+            $em->flush();
+            return new JsonResponse(["friend has been removed successfully!"]);
+        }
     }
 }

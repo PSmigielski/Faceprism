@@ -31,7 +31,7 @@ class VerifyEmailController extends AbstractController
     public function sendMail(MailerInterface $mailer, string $email, string $id) :bool{
         try{
             $email = (new TemplatedEmail())
-            ->from(new Address('walek.smigielski@gmail.com', 'bot'))
+            ->from(new Address('faceprism@gmail.com', 'Faceprism Bot'))
             ->to($email)
             ->subject('Verify your email')
             ->htmlTemplate('verify_email/email.html.twig')
