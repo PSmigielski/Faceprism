@@ -43,7 +43,7 @@ class Post
     /**
      * @ORM\Column(type="string", nullable=true)
      */
-    private $po_image;
+    private $po_file_url;
 
     /**
      * @ORM\OneToMany(targetEntity=Comment::class, mappedBy="co_post", orphanRemoval=true)
@@ -118,14 +118,14 @@ class Post
         return $this;
     }
 
-    public function getImage()
+    public function getFileUrl()
     {
-        return $this->po_image;
+        return $this->po_file_url;
     }
 
-    public function setImage($po_image): self
+    public function setFileUrl($po_file_url): self
     {
-        $this->po_image = $po_image;
+        $this->po_file_url = $po_file_url;
 
         return $this;
     }

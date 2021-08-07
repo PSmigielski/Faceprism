@@ -91,7 +91,11 @@ class PostController extends AbstractController
                 return new JsonResponse(["error"=> "something went wrong with reading file! it might be corrupted"], 500);
             } else {
                 if(strpos($request->files->get("file")->getMimeType(), 'image') !== false || strpos($request->files->get("file")->getMimeType(), 'video') !== false){
-                    $post->setImage($imageUploader->uploadFileToCloudinary($request->files->get("file")));
+                    if($request->files->get("file")->getSize() < 204800){
+                        $post->setFileUrl($imageUploader->uploadFileToCloudinary($request->files->get("file")));
+                    } else {
+                        return new JsonResponse(["error"=> "file is too big"], 400);
+                    }
                 } else {
                     return new JsonResponse(["error"=> "wrong file type"], 400);
                 }
@@ -113,6 +117,7 @@ class PostController extends AbstractController
      */
     public function edit(Request $request, string $postID, ImageUploader $imageUploader):JsonResponse
     {
+
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
         $post = $em->getRepository(Post::class)->find($postID);
@@ -120,13 +125,18 @@ class PostController extends AbstractController
             return new JsonResponse(["message"=>"Post does not exist"], 404);
         }
         if($post->getAuthor()->getId() == $payload['user_id']){
-            if(!is_null($request->request->get("text"))){
-                $post->setText($request->request->get("text"));
-            }else{
-                return new JsonResponse(["error"=>"text cannot be empty"], 400);
-            }
-            if(!is_null($request->files->get("file"))){
-                $post->setImage($imageUploader->uploadFileToCloudinary($request->files->get("file")));
+            if($request->files->get("file")->getError() == 1){
+                return new JsonResponse(["error"=> "something went wrong with reading file! it might be corrupted"], 500);
+            } else {
+                if(strpos($request->files->get("file")->getMimeType(), 'image') !== false || strpos($request->files->get("file")->getMimeType(), 'video') !== false){
+                    if($request->files->get("file")->getSize() < 204800){
+                        $post->setFileUrl($imageUploader->uploadFileToCloudinary($request->files->get("file")));
+                    } else {
+                        return new JsonResponse(["error"=> "file is too big"], 400);
+                    }
+                } else {
+                    return new JsonResponse(["error"=> "wrong file type"], 400);
+                }
             }
             $post->setEditedAt(new DateTime("now"));
             $em->persist($post);
