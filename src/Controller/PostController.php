@@ -19,8 +19,6 @@ use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 use App\Service\ImageUploader;
 
-use function Symfony\Component\DependencyInjection\Loader\Configurator\ref;
-
 /**
  * @Route("/v1/api/posts", defaults={"_is_api": true})
  * 
@@ -149,7 +147,7 @@ class PostController extends AbstractController
     /**
      * @Route("/{postID}", name="delete_post", methods={"DELETE"})
      */
-    public function remove(Request $request, string $postID)
+    public function remove(Request $request, string $postID) :JsonResponse
     {
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();

@@ -112,6 +112,7 @@ class CommentController extends AbstractController
                     return new JsonResponse(["error"=>"comment does not exist!"], 404);
                 }
                 $comment->setText($reqData['text']);
+                $comment->setEditedAt(new DateTime("now"));
                 $em->persist($comment);
                 $em->flush();
                 return new JsonResponse(["message"=>"comment has been edited"], 200);
@@ -125,7 +126,7 @@ class CommentController extends AbstractController
     /**
      * @Route("/{id}", name="delete_comment", methods={"DELETE"})
      */
-    public function remove(Request $request, string $id)
+    public function remove(Request $request, string $id) :JsonResponse
     {
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
