@@ -91,7 +91,7 @@ class PostController extends AbstractController
                 return new JsonResponse(["error"=> "something went wrong with reading file! it might be corrupted"], 500);
             } else {
                 if(strpos($request->files->get("file")->getMimeType(), 'image') !== false || strpos($request->files->get("file")->getMimeType(), 'video') !== false){
-                    if($request->files->get("file")->getSize() < 204800){
+                    if($request->files->get("file")->getSize() < 20480000){
                         $post->setFileUrl($imageUploader->uploadFileToCloudinary($request->files->get("file")));
                     } else {
                         return new JsonResponse(["error"=> "file is too big"], 400);

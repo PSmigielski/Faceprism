@@ -126,7 +126,6 @@ class Post
     public function setFileUrl($po_file_url): self
     {
         $this->po_file_url = $po_file_url;
-
         return $this;
     }
 
