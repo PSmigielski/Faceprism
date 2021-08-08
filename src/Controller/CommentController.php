@@ -56,10 +56,11 @@ class CommentController extends AbstractController
 
     }
     /**
-     * @Route("", name="create_comment",methods={"POST"})
+     * @Route("/{postId}", name="create_comment",methods={"POST"})
      */
-    public function create(Request $request, SchemaValidator $schemaValidator):JsonResponse
+    public function create(Request $request, string $postId,SchemaValidator $schemaValidator):JsonResponse
     {
+        $payload = $request->attributes->get("payload");
         $reqData = [];
         if($content = $request->getContent()){
             $reqData=json_decode($content, true);
@@ -67,8 +68,8 @@ class CommentController extends AbstractController
         $result = $schemaValidator->validateSchema('/../Schemas/commentSchema.json', (object)$reqData);
         if($result===true){
             $comment = new Comment();
-            $author = $this->getDoctrine()->getRepository(User::class)->find($reqData['author_uuid']);
-            $post = $this->getDoctrine()->getRepository(Post::class)->find($reqData['post_uuid']);
+            $author = $this->getDoctrine()->getRepository(User::class)->find($payload['user_id']);
+            $post = $this->getDoctrine()->getRepository(Post::class)->find($postId);
             if(!$author){
                 return new JsonResponse(["error"=> "user with this id does not exist!"], 404);
             }
@@ -81,7 +82,7 @@ class CommentController extends AbstractController
             $comment->setCreatedAt(new DateTime("now"));
             $post->setCommentCount($post->getCommentCount()+1);
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($comment, "json",['ignored_attributes' => ['usPosts', "transitions", "password", "salt", "dateOfBirth", "roles", "email", "username","gender","post"]]);
+            $resData = $serializer->serialize($comment, "json",['ignored_attributes' => ['posts', "transitions", "password", "salt", "dateOfBirth", "roles", "email", "username","gender","post"]]);
             $em = $this->getDoctrine()->getManager();
             $em->persist($comment);
             $em->persist($post);
@@ -93,10 +94,11 @@ class CommentController extends AbstractController
         }
     }
     /**
-     * @Route("/{id}", name="edit_comment",methods={"PUT"})
+     * @Route("/{id}",  methods={"PUT"})
      */
     public function edit(Request $request, string $id, SchemaValidator $schemaValidator):JsonResponse
     {
+        $payload = $request->attributes->get("payload");
         $reqData = [];
         if($content = $request->getContent()){
             $reqData=json_decode($content, true);
@@ -105,34 +107,42 @@ class CommentController extends AbstractController
         if($result === true){
             $em = $this->getDoctrine()->getManager();
             $comment = $em->getRepository(Comment::class)->find($id);
-            if(!$comment){
-                return new JsonResponse(["error"=>"comment does not exist!"], 404);
+            if($comment->getAuthor()->getId() == $payload['user_id']){
+                if(!$comment){
+                    return new JsonResponse(["error"=>"comment does not exist!"], 404);
+                }
+                $comment->setText($reqData['text']);
+                $em->persist($comment);
+                $em->flush();
+                return new JsonResponse(["message"=>"comment has been edited"], 200);
+            } else {
+                return new JsonResponse(["error"=>"This comment does not belong to you"], 403);
             }
-            $comment->setText($reqData['text']);
-            $em->persist($comment);
-            $em->flush();
-            return new JsonResponse(["message"=>"Post has been edited"], 200);
-        }
-        else{
+        } else {
             return $result;
         }
     }
     /**
      * @Route("/{id}", name="delete_comment", methods={"DELETE"})
      */
-    public function remove(string $id)
+    public function remove(Request $request, string $id)
     {
+        $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
         $comment = $em->getRepository(Comment::class)->find($id);
         if(!$comment){
             dump($comment);
             return new JsonResponse(["message"=>"Comment does not exist"], 404);
         }
-        $post = $comment->getPost();
-        $post->setCommentCount($post->getCommentCount()-1);
-        $em->remove($comment);
-        $em->persist($post);
-        $em->flush();
-        return new JsonResponse(["message"=>"Comment has been deleted"], 200);
+        if($comment->getAuthor()->getId() == $payload['user_id']){
+            $post = $comment->getPost();
+            $post->setCommentCount($post->getCommentCount()-1);
+            $em->remove($comment);
+            $em->persist($post);
+            $em->flush();
+            return new JsonResponse(["message"=>"Comment has been deleted"], 200);
+        } else {
+            return new JsonResponse(["error"=>"This comment does not belong to you"], 403);
+        }
     }
 }
