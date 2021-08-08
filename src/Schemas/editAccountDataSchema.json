@@ -3,11 +3,6 @@
     "type": "object",
     "minProperties": 1,
     "properties": {
-        "email":{
-            "type": "string",
-            "maxLength": 128,
-            "format": "email"
-        },
         "name":{
             "type": "string",
             "maxLength": 30

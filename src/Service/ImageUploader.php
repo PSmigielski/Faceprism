@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
  
     class ImageUploader
     {
-        public function uploadFileToCloudinary(UploadedFile $file, int $width, int $height, string $type)
+        public function uploadFileToCloudinary(UploadedFile $file, int $width = 0, int $height = 0, string $type = "default")
         {
             $cloudinary = Configuration::instance([
                 'cloud' => [
@@ -19,18 +19,30 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
                   'secure' => true]]);
               
             $fileName = $file->getRealPath();  
-            $config = [
-                "width" => $width, 
-                "height" => $height, 
-                "crop" => "fill"
-            ];
             switch($type){
                 case "profile_pic":
-                    $config["folder"] = "profile_pics";
-                    $config["gravity"] = "face";
+                    $config = [
+                        "width" => $width, 
+                        "height" => $height, 
+                        "crop" => "fill",
+                        "folder" => "profile_pics",
+                        "gravity" => "face"
+                    ];
                     break;
                 case "banner":
-                    $config["folder"] = "banners";
+                    $config = [
+                        "width" => $width, 
+                        "height" => $height, 
+                        "crop" => "fill",
+                        "folder" => "banners",
+                        "gravity" => "face"
+                    ];
+                    break;
+                case "default": 
+                    $config = [
+                        "folder" => "post_files",
+                        "resource_type" => "auto"
+                    ];
                     break;
             }
             $imageUploaded = (new UploadApi($cloudinary))->upload($fileName, $config);

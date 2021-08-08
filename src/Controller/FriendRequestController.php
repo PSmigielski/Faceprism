@@ -57,7 +57,8 @@ class FriendRequestController extends AbstractController
     /**
      * @Route("/{friendID}", methods={"POST"})
      */
-    public function add(Request $req, string $friendID){
+    public function add(Request $req, string $friendID):JsonResponse
+    {
         $payload = $req->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
         $fr_req = new FriendRequest();
@@ -97,7 +98,8 @@ class FriendRequestController extends AbstractController
     /**
      * @Route("/accept/{requestID}", methods={"POST"})
      */
-    public function accept(string $requestID){
+    public function accept(string $requestID) :JsonResponse
+    {
         $em = $this->getDoctrine()->getManager();
         $fr_req = $em->getRepository(FriendRequest::class)->find($requestID);
         if($fr_req){
@@ -123,7 +125,8 @@ class FriendRequestController extends AbstractController
     /**
      * @Route("/reject/{requestID}", methods={"DELETE"})
      */
-    public function reject(string $requestID){
+    public function reject(string $requestID) :JsonResponse
+    {
         $em = $this->getDoctrine()->getManager();
         $fr_req = $em->getRepository(FriendRequest::class)->find($requestID);
         if($fr_req){

@@ -19,40 +19,31 @@ class LikeController extends AbstractController
      */
     public function index(string $postID, Request $request) : JsonResponse
     {
-        $reqData = [];
-        if($content = $request->getContent()){
-            $reqData = json_decode($content, true);
+        $payload = $request->attributes->get("payload");
+        $em = $this->getDoctrine()->getManager();
+        $user = $em->getRepository(User::class)->find($payload["user_id"]);
+        $post = $em->getRepository(Post::class)->find($postID);
+        if(!$user){
+            return new JsonResponse(["error"=>"user with this id doesn't exist!"], 400);
         }
-        if(array_key_exists('user_uuid', $reqData)&&isset($reqData['user_uuid'])){
-            $em = $this->getDoctrine()->getManager();
-            $user = $em->getRepository(User::class)->find($reqData["user_uuid"]);
-            $post = $em->getRepository(Post::class)->find($postID);
-            if(!$user){
-                return new JsonResponse(["error"=>"user with this id doesn't exist!"], 400);
-            }
-            if(!$post){
-                return new JsonResponse(["error"=>"post with this id doesn't exist!"], 400);
-            }
-            if($em->getRepository(Like::class)->findBy(["li_post"=>$postID,"li_user"=>$reqData['user_uuid']])){
-                $like = $em->getRepository(Like::class)->findBy(["li_post"=>$postID,"li_user"=>$reqData['user_uuid']]);
-                $em->remove($like[0]);
-                $post->setLikeCount($post->getLikeCount()-1);
-                $em->persist($post);
-                $em->flush();
-                return new JsonResponse(["message"=>"like removed successfully"], 201);
-            }
-            $like = new Like();
-            $like->setPost($post);
-            $like->setUser($user);
-            $post->setLikeCount($post->getLikeCount()+1);
-            $em->persist($like);
+        if(!$post){
+            return new JsonResponse(["error"=>"post with this id doesn't exist!"], 400);
+        }
+        if($em->getRepository(Like::class)->findBy(["li_post"=>$postID,"li_user"=>$payload["user_id"]])){
+            $like = $em->getRepository(Like::class)->findBy(["li_post"=>$postID,"li_user"=>$payload["user_id"]]);
+            $em->remove($like[0]);
+            $post->setLikeCount($post->getLikeCount()-1);
             $em->persist($post);
             $em->flush();
-            return new JsonResponse(["message"=>"like added successfully"], 201);
-
-        }else{
-            return new JsonResponse(["error"=>"provide user uuid!"], 400);
+            return new JsonResponse(["message"=>"like removed successfully"], 201);
         }
-        
+        $like = new Like();
+        $like->setPost($post);
+        $like->setUser($user);
+        $post->setLikeCount($post->getLikeCount()+1);
+        $em->persist($like);
+        $em->persist($post);
+        $em->flush();
+        return new JsonResponse(["message"=>"like added successfully"], 201);  
     }
 }

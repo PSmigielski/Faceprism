@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Service\ImageUploader;
+use App\Service\SchemaValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,15 +21,22 @@ class ProfileController extends AbstractController
     public function updateProfilePic(Request $req, ImageUploader $imageUploader, string $imageType): JsonResponse
     {
         $em = $this->getDoctrine()->getManager();
-        $userID = $req->request->get("userID");
-        $user = $em->getRepository(User::class)->find($userID);
+        $payload = $req->attributes->get("payload");
+        $user = $em->getRepository(User::class)->find($payload["user_id"]);
         if(is_null($user)){
             return new JsonResponse(["error"=>"user with this id does not exist!"], 404);
         }else{
             $width = $imageType == "banner" ? 820 : 200;
             $height = $imageType == "banner" ? 312 : 200;
             if(strpos($req->files->get("image")->getMimeType(), 'image') !== false){ 
-                $user->setProfilePicUrl($imageUploader->uploadFileToCloudinary($req->files->get("image"), $width , $height, $imageType));
+                switch($imageType){
+                    case "banner":
+                        $user->setBannerUrl($imageUploader->uploadFileToCloudinary($req->files->get("image"), $width , $height, $imageType));
+                        break;
+                    case "profile_pic":
+                        $user->setProfilePicUrl($imageUploader->uploadFileToCloudinary($req->files->get("image"), $width , $height, $imageType));
+                        break;
+                }
                 $em->persist($user);
                 $em->flush();
                 return new JsonResponse(["message" => $imageType." has been updated"], 201);
@@ -38,12 +46,13 @@ class ProfileController extends AbstractController
         }
     }
     /**
-     * @Route("/bio/{userID}", name="change_bio",methods={"PUT"})
+     * @Route("/bio", name="change_bio",methods={"PUT"})
      */
-    public function updateBio(Request $req, string $userID, SchemaController $schemaController): JsonResponse
+    public function updateBio(Request $req, SchemaValidator $schemaValidator): JsonResponse
     {
+        $payload = $req->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
-        $user = $em->getRepository(User::class)->find($userID);
+        $user = $em->getRepository(User::class)->find($payload["user_id"]);
         if(is_null($user)){
             return new JsonResponse(["error"=>"user with this id does not exist!"], 404);
         }else{
@@ -51,7 +60,7 @@ class ProfileController extends AbstractController
             if($content = $req->getContent()){
                 $reqData=json_decode($content, true);
             }
-            $result = $schemaController->validateSchema('/../Schemas/profileUpdateBioSchema.json', (object)$reqData);
+            $result = $schemaValidator->validateSchema('/../Schemas/profileUpdateBioSchema.json', (object)$reqData);
             if($result === true){
                 $user->setBio($reqData["bio"]);
                 $em->persist($user);

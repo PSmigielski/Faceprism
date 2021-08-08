@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\Entity\Post;
 use App\Entity\User;
-use App\Controller\SchemaController;
 use App\Repository\PostRepository;
 use DateTime;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
@@ -18,6 +17,7 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
+use App\Service\ImageUploader;
 
 /**
  * @Route("/v1/api/posts", defaults={"_is_api": true})
@@ -48,7 +48,7 @@ class PostController extends AbstractController
                 "posts"=> $posts
             ];
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['usPosts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt", "post"]]);
+            $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['posts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt", "post"]]);
             return JsonResponse::fromJsonString($resData, 200);
         }
         catch(OutOfRangeCurrentPageException $e){
@@ -58,102 +58,109 @@ class PostController extends AbstractController
     /**
      * @Route("/{id}", name="get_post", methods={"GET"})
      */
-    public function show(int $id): JsonResponse
+    public function show(string $id, SerializerInterface $serializer): JsonResponse
     {
         $post = $this->getDoctrine()->getRepository(Post::class)->find($id);
         if(!$post){
-            return new JsonResponse(["message" => "no posts found"],404);
+            return new JsonResponse(["message" => "Post with this id does not exist"],404);
         }
-        return new JsonResponse($post, 200);
+        
+        $resData = $serializer->serialize($post, "json",['ignored_attributes' => ['posts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt", "post"]]);
+        return JsonResponse::fromJsonString($resData, 200);
     }
     /**
      * @Route("", name="add_post", methods={"POST"})
      */
-    public function create(Request $request, SchemaController $schemaController):JsonResponse
+    public function create(Request $request, ImageUploader $imageUploader):JsonResponse
     {
-        $reqData = [];
-        if($content = $request->getContent()){
-            $reqData=json_decode($content, true);
+        $payload = $request->attributes->get("payload");
+        $post = new Post();
+        $author = $this->getDoctrine()->getRepository(User::class)->find($payload["user_id"]);
+        if(!$author){
+            return new JsonResponse(["error"=> "user with this id does not exist!"], 404);
         }
-        $result = $schemaController->validateSchema('/../Schemas/postSchema.json', (object) $reqData);
-        if($result === true){
-            $author_id = $reqData['author_uuid'];
-            $post = new Post();
-            $author = $this->getDoctrine()->getRepository(User::class)->find($author_id);
-            if(!$author){
-                return new JsonResponse(["error"=> "user with this id does not exist!"], 404);
-            }
-            $post->setAuthor($author);
-            if(array_key_exists('text', $reqData)||array_key_exists('img', $reqData)){
-                if(array_key_exists('text', $reqData)){
-                    $post->setText($reqData['text']);
+        if($request->request->get("text") != "" && !is_null($request->request->get("text"))){
+            $post->setText($request->request->get("text"));
+        }else{
+            return new JsonResponse(["error"=>"text cannot be empty"], 400);
+        }
+        if(!is_null($request->files->get("file"))){
+            if($request->files->get("file")->getError() == 1){
+                return new JsonResponse(["error"=> "something went wrong with reading file! it might be corrupted"], 500);
+            } else {
+                if(strpos($request->files->get("file")->getMimeType(), 'image') !== false || strpos($request->files->get("file")->getMimeType(), 'video') !== false){
+                    if($request->files->get("file")->getSize() < 20480000){
+                        $post->setFileUrl($imageUploader->uploadFileToCloudinary($request->files->get("file")));
+                    } else {
+                        return new JsonResponse(["error"=> "file is too big"], 400);
+                    }
+                } else {
+                    return new JsonResponse(["error"=> "wrong file type"], 400);
                 }
-                if(array_key_exists('img', $reqData)){
-                    $post->setImage($reqData['img']);
-                }
             }
-            else{
-                return new JsonResponse(["error"=> "text or image required!"], 400);
-            }
-            $post->setCreatedAt(new DateTime("now"));
-            $post->setLikeCount(0);
-            $post->setCommentCount(0);
-            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($post, "json",['ignored_attributes' => ['usPosts', "transitions", "password", "salt", "dateOfBirth", "roles"]]);
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($post);
-            $em->flush();
-            return JsonResponse::fromJsonString($resData, 201);
         }
-        else{
-            return $result;
-        }
-    }
-    /**
-     * @Route("/{id}", name="edit_comment", methods={"PUT"})
-     */
-    public function edit(Request $request, string $id, SchemaController $schemaController)
-    {
-        $reqData = [];
-        if($content = $request->getContent()){
-            $reqData=json_decode($content, true);
-        }
-        $result = $schemaController->validateSchema('/../Schemas/editPostSchema.json', (object) $reqData);
-        if($result===true){
-            $em = $this->getDoctrine()->getManager();
-            $post = $em->getRepository(Post::class)->find($id);
-            if(!$post){
-                return new JsonResponse(["message"=>"Post does not exist"], 404);
-            }
-            if(array_key_exists('text', $reqData)){
-                $post->setText($reqData['text']);
-            }
-            if(array_key_exists('img', $reqData)){
-                $post->setImage($reqData['img']);
-            }
-            else{
-                return new JsonResponse(["error"=> "text or image required!"], 400);
-            }
-            $em->persist($post);
-            $em->flush();
-            return new JsonResponse(["message"=>"Post has been edited"], 200);
-        }
-        else{
-            return $result;
-        }
-    }
-    /**
-     * @Route("/{id}", name="delete_post", methods={"DELETE"})
-     */
-    public function remove(string $id)
-    {
+        $post->setAuthor($author);
+        $post->setCreatedAt(new DateTime("now"));
+        $post->setLikeCount(0);
+        $post->setCommentCount(0);
+        $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+        $resData = $serializer->serialize($post, "json",['ignored_attributes' => ['posts', "transitions", "password", "salt", "dateOfBirth", "roles"]]);
         $em = $this->getDoctrine()->getManager();
-        $post = $em->getRepository(Post::class)->find($id);
+        $em->persist($post);
+        $em->flush();
+        return JsonResponse::fromJsonString($resData, 201);
+    }
+    /**
+     * @Route("/{postID}", name="edit_comment", methods={"POST"})
+     */
+    public function edit(Request $request, string $postID, ImageUploader $imageUploader):JsonResponse
+    {
+
+        $payload = $request->attributes->get("payload");
+        $em = $this->getDoctrine()->getManager();
+        $post = $em->getRepository(Post::class)->find($postID);
         if(!$post){
             return new JsonResponse(["message"=>"Post does not exist"], 404);
         }
-        $em->remove($post);
-        $em->flush();
-        return new JsonResponse(["message"=>"Post has been deleted"], 200);
+        if($post->getAuthor()->getId() == $payload['user_id']){
+            if($request->files->get("file")->getError() == 1){
+                return new JsonResponse(["error"=> "something went wrong with reading file! it might be corrupted"], 500);
+            } else {
+                if(strpos($request->files->get("file")->getMimeType(), 'image') !== false || strpos($request->files->get("file")->getMimeType(), 'video') !== false){
+                    if($request->files->get("file")->getSize() < 204800){
+                        $post->setFileUrl($imageUploader->uploadFileToCloudinary($request->files->get("file")));
+                    } else {
+                        return new JsonResponse(["error"=> "file is too big"], 400);
+                    }
+                } else {
+                    return new JsonResponse(["error"=> "wrong file type"], 400);
+                }
+            }
+            $post->setEditedAt(new DateTime("now"));
+            $em->persist($post);
+            $em->flush();
+            return new JsonResponse(["message"=>"Post has been edited"], 200);
+        } else {
+            return new JsonResponse(["error"=>"This post does not belong to you"], 403);
+        }
+    }
+    /**
+     * @Route("/{postID}", name="delete_post", methods={"DELETE"})
+     */
+    public function remove(Request $request, string $postID) :JsonResponse
+    {
+        $payload = $request->attributes->get("payload");
+        $em = $this->getDoctrine()->getManager();
+        $post = $em->getRepository(Post::class)->find($postID);
+        if(!$post){
+            return new JsonResponse(["message"=>"Post does not exist"], 404);
+        }
+        if($post->getAuthor()->getId() == $payload['user_id']){
+            $em->remove($post);
+            $em->flush();
+            return new JsonResponse(["message"=>"Post has been deleted"], 200);
+        } else {
+            return new JsonResponse(["error"=>"This post does not belong to you"], 403);
+        }   
     }
 }

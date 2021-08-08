@@ -1,14 +1,13 @@
 <?php 
-namespace App\Controller;
+namespace App\Service;
 
 use DateTime;
 use Opis\JsonSchema\{
     Validator, Schema
 };
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-class SchemaController extends AbstractController
+class SchemaValidator
 {
     public function validateSchema(string $pathToSchema, object $data){
         $schema = Schema::fromJsonString(file_get_contents(__DIR__.$pathToSchema));
@@ -111,19 +110,22 @@ class SchemaController extends AbstractController
                         return new JsonResponse(["error"=>"post uuid is missing"], 400);
                         break;
                     case "password":
-                        return new JsonResponse(["error"=>"password is too long"], 400);
+                        return new JsonResponse(["error"=>"password is missing"], 400);
                         break;
                     case "date_of_birth":
-                        return new JsonResponse(["error"=>"date of birth has wrong format"], 400);
+                        return new JsonResponse(["error"=>"date of birth is missing"], 400);
                         break;
                     case "email":
-                        return new JsonResponse(["error"=>"email is too long"], 400);
+                        return new JsonResponse(["error"=>"email is missing"], 400);
                         break;
                     case "name":
-                        return new JsonResponse(["error"=>"name is too long"], 400);
+                        return new JsonResponse(["error"=>"name is missing"], 400);
                         break;
                     case "surname":
-                        return new JsonResponse(["error"=>"surname is too long"], 400);
+                        return new JsonResponse(["error"=>"surname is missing"], 400);
+                        break;
+                    case "text":
+                        return new JsonResponse(["error"=>"text is missing"], 400);
                         break;
                 }
                 break;

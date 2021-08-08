@@ -2,17 +2,11 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "properties": {
-        "author_uuid":{
-            "type":"string"
-        },
-        "post_uuid":{
-            "type":"string"
-        },
         "text":{
             "type":"string",
             "maxLength": 255
         }
     },
-    "required": ["author_uuid", "post_uuid", "text"],
+    "required": ["text"],
     "additionalProperties": false
 }
