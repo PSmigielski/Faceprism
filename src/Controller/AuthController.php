@@ -76,11 +76,12 @@ class AuthController extends AbstractController
 
     }
     /**
-     * @Route("/account/{userID}", methods={"DELETE"})
+     * @Route("/account", methods={"DELETE"})
      */
-    public function remove(string $userID) : JsonResponse{
+    public function remove(Request $request) : JsonResponse{
+        $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
-        $user = $em->getRepository(User::class)->find($userID);
+        $user = $em->getRepository(User::class)->find($payload["user_id"]);
         if(!$user){
             return new JsonResponse(["error" => "User with this id does not exist!"], 404);
         }
@@ -89,26 +90,23 @@ class AuthController extends AbstractController
         return new JsonResponse(["message"=>"User has been deleted"], 201);
     }
     /**
-     * @Route("/account/{userID}", methods={"PUT"})
+     * @Route("/account", methods={"PUT"})
      */
-    public function updateAccount(Request $req,SchemaValidator $schemaValidator, string $userID,) : JsonResponse{
+    public function updateAccount(Request $request,SchemaValidator $schemaValidator) : JsonResponse{
         $reqData = [];
-        if($content = $req->getContent()){
+        $payload = $request->attributes->get("payload");
+        if($content = $request->getContent()){
             $reqData=json_decode($content, true);
         }
         $result = $schemaValidator->validateSchema('/../Schemas/editAccountDataSchema.json', (object)$reqData);
         if($result === true){
             $em = $this->getDoctrine()->getManager();
-            $user = $em->getRepository(User::class)->find($userID);
+            $user = $em->getRepository(User::class)->find($payload["user_id"]);
             if(!$user){
                 return new JsonResponse(["error" => "User with this id does not exist!"], 404);
             }
-            dump($user);
             foreach ($reqData as $key => $value) {
                 switch($key){
-                    case "email":
-                        $user->setEmail($value);
-                        break;
                     case "name":
                         $user->setName($value);
                         break;
@@ -123,7 +121,6 @@ class AuthController extends AbstractController
                         break;
                 }
             }
-            dump($user);
             $em->persist($user);
             $em->flush();
             return new JsonResponse(["message"=>"Account data has been modified"], 201);
