@@ -27,19 +27,13 @@ class UserCreateSubscriber implements EventSubscriberInterface
     {
         $verifyEmailController = new VerifyEmailController();
         $user = $event->getUser();
-        $res = $event->getResponse();
         $verReq = $verifyEmailController->add($this->entityManager, $user);
-        $resData = [];
-        if($content = $res->getContent()){
-            $resData=json_decode($content, true);
-        }
         $isMailSent = $verifyEmailController->sendMail($this->mailer, $user->getEmail(), $verReq->getId());
         if($isMailSent){
-            $resData['isMailSent'] = $isMailSent;
-            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($resData, "json");
-            $response = JsonResponse::fromJsonString($resData,201);
-            $event->setResponse($response);
+            $event->setResponse(new JsonResponse([
+                "message" => "Your account has been created successfully!",
+                "isMailSent" => $isMailSent
+            ],201));
         } else {
             $this->entityManager->remove($user);
             $this->entityManager->remove($verReq);
