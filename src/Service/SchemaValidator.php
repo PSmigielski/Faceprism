@@ -1,14 +1,13 @@
 <?php 
-namespace App\Controller;
+namespace App\Service;
 
 use DateTime;
 use Opis\JsonSchema\{
     Validator, Schema
 };
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-class SchemaController extends AbstractController
+class SchemaValidator
 {
     public function validateSchema(string $pathToSchema, object $data){
         $schema = Schema::fromJsonString(file_get_contents(__DIR__.$pathToSchema));

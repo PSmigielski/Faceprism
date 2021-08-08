@@ -3,6 +3,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Event\UserCreateEvent;
+use App\Service\SchemaValidator;
 use DateTime;
 use Gesdinet\JWTRefreshTokenBundle\Entity\RefreshToken;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
@@ -35,20 +36,20 @@ class AuthController extends AbstractController
     /**
      * @Route("/register")
      */
-    public function add(Request $req,SchemaController $schemaController, UserPasswordEncoderInterface $passEnc) : JsonResponse
+    public function add(Request $req,SchemaValidator $schemaValidator, UserPasswordEncoderInterface $passEnc) : JsonResponse
     {  
         $reqData = [];
         if($content = $req->getContent()){
             $reqData=json_decode($content, true);
         }
-        $result = $schemaController->validateSchema('/../Schemas/registerSchema.json', (object)$reqData);
+        $result = $schemaValidator->validateSchema('/../Schemas/registerSchema.json', (object)$reqData);
         if($result === true){
             $user = new User();
             $em = $this->getDoctrine()->getManager();
             if(!$em->getRepository(User::class)->findOneBy(["us_email" => $reqData['email']])){
                 $user->setEmail($reqData['email']);
                 $user->setPassword($passEnc->encodePassword($user, $reqData['password']));
-                if(!$schemaController->verifyDate($reqData['date_of_birth'])){
+                if(!$schemaValidator->verifyDate($reqData['date_of_birth'])){
                     return new JsonResponse(["error"=>"invalid date"], 400);
                 }
                 $user->setDateOfBirth(new DateTime($reqData['date_of_birth']));
@@ -90,12 +91,12 @@ class AuthController extends AbstractController
     /**
      * @Route("/account/{userID}", methods={"PUT"})
      */
-    public function updateAccount(Request $req,SchemaController $schemaController, string $userID,) : JsonResponse{
+    public function updateAccount(Request $req,SchemaValidator $schemaValidator, string $userID,) : JsonResponse{
         $reqData = [];
         if($content = $req->getContent()){
             $reqData=json_decode($content, true);
         }
-        $result = $schemaController->validateSchema('/../Schemas/editAccountDataSchema.json', (object)$reqData);
+        $result = $schemaValidator->validateSchema('/../Schemas/editAccountDataSchema.json', (object)$reqData);
         if($result === true){
             $em = $this->getDoctrine()->getManager();
             $user = $em->getRepository(User::class)->find($userID);

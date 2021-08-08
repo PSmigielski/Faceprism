@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Service\ImageUploader;
+use App\Service\SchemaValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -40,7 +41,7 @@ class ProfileController extends AbstractController
     /**
      * @Route("/bio/{userID}", name="change_bio",methods={"PUT"})
      */
-    public function updateBio(Request $req, string $userID, SchemaController $schemaController): JsonResponse
+    public function updateBio(Request $req, string $userID, SchemaValidator $schemaValidator): JsonResponse
     {
         $em = $this->getDoctrine()->getManager();
         $user = $em->getRepository(User::class)->find($userID);
@@ -51,7 +52,7 @@ class ProfileController extends AbstractController
             if($content = $req->getContent()){
                 $reqData=json_decode($content, true);
             }
-            $result = $schemaController->validateSchema('/../Schemas/profileUpdateBioSchema.json', (object)$reqData);
+            $result = $schemaValidator->validateSchema('/../Schemas/profileUpdateBioSchema.json', (object)$reqData);
             if($result === true){
                 $user->setBio($reqData["bio"]);
                 $em->persist($user);

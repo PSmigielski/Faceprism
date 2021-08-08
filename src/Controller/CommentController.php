@@ -5,8 +5,8 @@ namespace App\Controller;
 use App\Entity\Comment;
 use App\Entity\Post;
 use App\Entity\User;
-use App\Controller\SchemaController;
 use App\Repository\CommentRepository;
+use App\Service\SchemaValidator;
 use DateTime;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
@@ -58,13 +58,13 @@ class CommentController extends AbstractController
     /**
      * @Route("", name="create_comment",methods={"POST"})
      */
-    public function create(Request $request, SchemaController $schemaController):JsonResponse
+    public function create(Request $request, SchemaValidator $schemaValidator):JsonResponse
     {
         $reqData = [];
         if($content = $request->getContent()){
             $reqData=json_decode($content, true);
         }
-        $result = $schemaController->validateSchema('/../Schemas/commentSchema.json', (object)$reqData);
+        $result = $schemaValidator->validateSchema('/../Schemas/commentSchema.json', (object)$reqData);
         if($result===true){
             $comment = new Comment();
             $author = $this->getDoctrine()->getRepository(User::class)->find($reqData['author_uuid']);
@@ -95,13 +95,13 @@ class CommentController extends AbstractController
     /**
      * @Route("/{id}", name="edit_comment",methods={"PUT"})
      */
-    public function edit(Request $request, string $id, SchemaController $schemaController):JsonResponse
+    public function edit(Request $request, string $id, SchemaValidator $schemaValidator):JsonResponse
     {
         $reqData = [];
         if($content = $request->getContent()){
             $reqData=json_decode($content, true);
         }
-        $result = $schemaController->validateSchema('/../Schemas/commentEditSchema.json', (object)$reqData);
+        $result = $schemaValidator->validateSchema('/../Schemas/commentEditSchema.json', (object)$reqData);
         if($result === true){
             $em = $this->getDoctrine()->getManager();
             $comment = $em->getRepository(Comment::class)->find($id);
