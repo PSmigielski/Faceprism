@@ -9,12 +9,30 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\Serializer;
 
 /**
  * @Route("/v1/api/profile", defaults={"_is_api": true})
  */
 class ProfileController extends AbstractController
 {
+    /**
+     * @Route("/{userID}", name="get_profile",methods={"GET"})
+     */
+    public function show(Request $request, string $userID ) : JsonResponse
+    {
+        $em = $this->getDoctrine()->getManager();
+        $user = $em->getRepository(User::class)->find($userID);
+        if(is_null($user)){
+            return new JsonResponse(["error"=>"user with this id does not exist!"], 404);
+        }else{
+            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+            $resData = $serializer->serialize($user, "json",['ignored_attributes' => ['posts', "transitions", "timezone", "roles","email","verified","username","password", "salt", "post", "user", "id"]]);
+            return JsonResponse::fromJsonString($resData, 200);
+        }
+    }
     /**
      * @Route("/image/{imageType}", name="change_image",methods={"POST"})
      */
@@ -72,7 +90,7 @@ class ProfileController extends AbstractController
         }
     }
     /**
-     * @Route("/tag/{newTag}", name="change_bio",methods={"PUT"})
+     * @Route("/tag/{newTag}", name="change_tag",methods={"PUT"})
      */
     public function updateTag(Request $request, string $newTag ) : JsonResponse
     {
