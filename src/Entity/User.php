@@ -84,7 +84,7 @@ class User implements UserInterface
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private $us_username;
+    private $us_tag;
 
     public function __construct()
     {

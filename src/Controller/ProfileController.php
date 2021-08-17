@@ -71,4 +71,25 @@ class ProfileController extends AbstractController
             }
         }
     }
+    /**
+     * @Route("/tag/{newTag}", name="change_bio",methods={"PUT"})
+     */
+    public function updateTag(Request $request, string $newTag ) : JsonResponse
+    {
+        $payload = $request->attributes->get("payload");
+        $em = $this->getDoctrine()->getManager();
+        $user = $em->getRepository(User::class)->find($payload["user_id"]);
+        if(is_null($user)){
+            return new JsonResponse(["error"=>"user with this id does not exist!"], 404);
+        }else{
+            if(preg_match("/^[a-zA-Z0-9_]{3,15}$/", $newTag) === 1){
+                $user->setTag("@".$newTag);
+                $em->persist($user);
+                $em->flush();
+                return new JsonResponse(["message" => "user tag has been changed!"], 200);
+            }else{
+                return new JsonResponse(["error"=>"Illegal characters used in this tag"], 404);
+            }
+        }
+    }
 }
