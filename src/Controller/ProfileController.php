@@ -21,7 +21,7 @@ class ProfileController extends AbstractController
     /**
      * @Route("/{userID}", name="get_profile",methods={"GET"})
      */
-    public function show(Request $request, string $userID ) : JsonResponse
+    public function show(string $userID) : JsonResponse
     {
         $em = $this->getDoctrine()->getManager();
         $user = $em->getRepository(User::class)->find($userID);
@@ -101,10 +101,20 @@ class ProfileController extends AbstractController
             return new JsonResponse(["error"=>"user with this id does not exist!"], 404);
         }else{
             if(preg_match("/^[a-zA-Z0-9_]{3,15}$/", $newTag) === 1){
-                $user->setTag("@".$newTag);
-                $em->persist($user);
-                $em->flush();
-                return new JsonResponse(["message" => "user tag has been changed!"], 200);
+                $tmp = $em->getRepository(User::class)->findBy(["us_tag" => "@".$newTag]);
+                if(empty($tmp)){ 
+                    $user->setTag("@".$newTag);
+                    $em->persist($user);
+                    $em->flush();
+                    return new JsonResponse(["message" => "user tag has been changed!"], 200);
+                } else {
+                    if($tmp[0]->getTag() == $user->getTag()){
+                        return new JsonResponse(["message" => "You have this tag already"], 400);
+                    }else{
+                        return new JsonResponse(["message" => "This tag is occupied"], 400);
+                    }
+                }
+
             }else{
                 return new JsonResponse(["error"=>"Illegal characters used in this tag"], 404);
             }
