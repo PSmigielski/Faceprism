@@ -10,7 +10,7 @@ class UUIDService
     }
     public function encodeUUID(string $uuid):string
     {
-        return $str = substr($uuid, 0, 8)."-".substr($uuid, 8, 4)."-".substr($uuid, 12, 4)."-".substr($uuid, 16,4)."-".substr($uuid, 20);
+        return substr($uuid, 0, 8)."-".substr($uuid, 8, 4)."-".substr($uuid, 12, 4)."-".substr($uuid, 16,4)."-".substr($uuid, 20);
     }
 }
 ?>

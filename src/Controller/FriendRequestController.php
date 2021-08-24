@@ -6,6 +6,7 @@ use App\Entity\Friend;
 use App\Entity\FriendRequest;
 use App\Entity\User;
 use App\Repository\FriendRequestRepository;
+use App\Service\UUIDService;
 use DateTime;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
@@ -26,12 +27,12 @@ class FriendRequestController extends AbstractController
     /**
      * @Route("", methods={"GET"})
      */
-    public function index(FriendRequestRepository $repo, Request $request): JsonResponse
+    public function index(FriendRequestRepository $repo, Request $request, UUIDService $UUIDService): JsonResponse
     {
         try{
             $payload = $request->attributes->get("payload");
             $page = $request->query->get('page', 1);
-            $qb = $repo->createGetAllFriendRequests($payload["user_id"]);
+            $qb = $repo->createGetAllFriendRequests($UUIDService->encodeUUID($payload["user_id"]));
             $adapter = new QueryAdapter($qb);
             $pagerfanta = new Pagerfanta($adapter);
             $pagerfanta->setMaxPerPage(25);
@@ -47,8 +48,17 @@ class FriendRequestController extends AbstractController
                 "requests"=> $requests
             ];
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['usPosts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt", "post"]]);
-            return JsonResponse::fromJsonString($resData, 200);
+            $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['posts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt", "post"]]);
+            $tmp = json_decode($resData, true);
+            $tmpRequests = [];
+            foreach($tmp["requests"] as $r){
+                $r["id"] = $UUIDService->decodeUUID($r["id"]);
+                $r["user"]["id"] = $UUIDService->decodeUUID($r["user"]["id"]);
+                $r["friend"]["id"] = $UUIDService->decodeUUID($r["friend"]["id"]);
+                array_push($tmpRequests, $r);
+            }
+            $tmp["requests"] = $tmpRequests;
+            return new JsonResponse($tmp, 200);
         }
         catch(OutOfRangeCurrentPageException $e){
             return new JsonResponse(["message"=>"Page not found"], 404);
@@ -57,7 +67,7 @@ class FriendRequestController extends AbstractController
     /**
      * @Route("/{friendID}", methods={"POST"})
      */
-    public function add(Request $req, string $friendID):JsonResponse
+    public function add(Request $req, string $friendID, UUIDService $UUIDService):JsonResponse
     {
         $payload = $req->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
@@ -65,8 +75,8 @@ class FriendRequestController extends AbstractController
         if($payload["user_id"]===$friendID){
             return new JsonResponse(["error" => "You can't request yourself!"],400);
         }
-        $user = $em->getRepository(User::class)->find($payload["user_id"]);
-        $friend = $em->getRepository(User::class)->find($friendID);
+        $user = $em->getRepository(User::class)->find($UUIDService->encodeUUID($payload["user_id"]));
+        $friend = $em->getRepository(User::class)->find($UUIDService->encodeUUID($friendID));
         if(!$user || !$friend){
             return new JsonResponse(["error" => "User with this id does not exist!"], 404);
         }
@@ -86,11 +96,9 @@ class FriendRequestController extends AbstractController
             $fr_req->setFriend($friend);
             $fr_req->setRequestDate(new DateTime("now"));
             $fr_req->setAccepted(false);
-            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($fr_req, "json",['ignored_attributes' => ['usPosts', "transitions", "password", "salt", "dateOfBirth", "roles"]]);
             $em->persist($fr_req);
             $em->flush();
-            return JsonResponse::fromJsonString($resData, 201);
+            return new JsonResponse(["message" => "Friend Request has been sent"], 200);
         }else{
             return new JsonResponse(["error" => "Pending request with this friend exist!"], 400);
         }
@@ -98,10 +106,10 @@ class FriendRequestController extends AbstractController
     /**
      * @Route("/accept/{requestID}", methods={"POST"})
      */
-    public function accept(string $requestID) :JsonResponse
+    public function accept(string $requestID, UUIDService $UUIDService) :JsonResponse
     {
         $em = $this->getDoctrine()->getManager();
-        $fr_req = $em->getRepository(FriendRequest::class)->find($requestID);
+        $fr_req = $em->getRepository(FriendRequest::class)->find($UUIDService->encodeUUID($requestID));
         if($fr_req){
             $friend1 = new Friend();
             $friend1->setFriend($fr_req->getFriend());
@@ -117,24 +125,24 @@ class FriendRequestController extends AbstractController
             $em->persist($friend1);
             $em->persist($friend2);
             $em->flush();
-            return new JsonResponse(["message" => "friend added successfully!"], 201);
+            return new JsonResponse(["message" => "Friend added successfully!"], 201);
         }else{
-            return new JsonResponse(["error" => "request with this id does not exist!"], 404);
+            return new JsonResponse(["error" => "Request with this id does not exist!"], 404);
         }
     }
     /**
      * @Route("/reject/{requestID}", methods={"DELETE"})
      */
-    public function reject(string $requestID) :JsonResponse
+    public function reject(string $requestID, UUIDService $UUIDService) :JsonResponse
     {
         $em = $this->getDoctrine()->getManager();
-        $fr_req = $em->getRepository(FriendRequest::class)->find($requestID);
+        $fr_req = $em->getRepository(FriendRequest::class)->find($UUIDService->encodeUUID($requestID));
         if($fr_req){
             $em->remove($fr_req);
             $em->flush();
-            return new JsonResponse(["message" => "friend request rejected successfully!"], 201);
+            return new JsonResponse(["message" => "Friend request rejected successfully!"], 201);
         }else{
-            return new JsonResponse(["error" => "request with this id does not exist!"], 404);
+            return new JsonResponse(["error" => "Request with this id does not exist!"], 404);
         }
     }
 }

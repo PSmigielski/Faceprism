@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Entity\VerifyEmailRequest;
+use App\Service\UUIDService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -12,7 +13,6 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Validator\Constraints\IsNull;
 
 class VerifyEmailController extends AbstractController
 {   
@@ -30,13 +30,14 @@ class VerifyEmailController extends AbstractController
     }
     public function sendMail(MailerInterface $mailer, string $email, string $id) :bool{
         try{
+            $UUIDService = new UUIDService();
             $email = (new TemplatedEmail())
             ->from(new Address('faceprism@gmail.com', 'Faceprism Bot'))
             ->to($email)
             ->subject('Verify your email')
             ->htmlTemplate('verify_email/email.html.twig')
             ->context([
-                'verifyToken' => $id
+                'verifyToken' => $UUIDService->decodeUUID($id)
             ]);
             $mailer->send($email);
             return true;
@@ -47,10 +48,10 @@ class VerifyEmailController extends AbstractController
     /**
      * @Route("/v1/api/verify/{verifyId}",name="verify_email", methods={"POST"}, defaults={"_is_api": true})
      */
-    public function verify(string $verifyId) : JsonResponse
+    public function verify(string $verifyId,UUIDService $UUIDService) : JsonResponse
     {
         $em = $this->getDoctrine()->getManager();
-        $verRequest=$em->getRepository(VerifyEmailRequest::class)->find($verifyId);
+        $verRequest=$em->getRepository(VerifyEmailRequest::class)->find($UUIDService->encodeUUID($verifyId));
         if(is_null($verRequest)){
             return new JsonResponse(["error" => "Verify Request with this id does not exist!"],404);
         }else{
