@@ -20,13 +20,13 @@ class Like
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class)
-     * @ORM\JoinColumn(name="li_user",referencedColumnName = "us_id", nullable=false,onDelete="CASCADE")
+     * @ORM\JoinColumn(name="li_user",referencedColumnName = "us_id", nullable=false, onDelete="CASCADE")
      */
     private $li_user;
 
     /**
      * @ORM\ManyToOne(targetEntity=Post::class)
-     * @ORM\JoinColumn(name="li_post",referencedColumnName = "po_id", nullable=false)
+     * @ORM\JoinColumn(name="li_post",referencedColumnName = "po_id", nullable=false, onDelete="CASCADE")
      */
     private $li_post;
 
