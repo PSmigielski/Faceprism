@@ -11,6 +11,7 @@ use DateTime;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
 use Pagerfanta\Pagerfanta;
+use ProxyManager\Factory\RemoteObject\Adapter\JsonRpc;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -106,25 +107,30 @@ class FriendRequestController extends AbstractController
     /**
      * @Route("/accept/{requestID}", methods={"POST"})
      */
-    public function accept(string $requestID, UUIDService $UUIDService) :JsonResponse
-    {
+    public function accept(Request $req, string $requestID, UUIDService $UUIDService) :JsonResponse
+    { 
+        $payload = $req->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
         $fr_req = $em->getRepository(FriendRequest::class)->find($UUIDService->encodeUUID($requestID));
         if($fr_req){
-            $friend1 = new Friend();
-            $friend1->setFriend($fr_req->getFriend());
-            $friend1->setUser($fr_req->getUser());
-            $friend1->setAcceptDate(new Datetime('now'));
-            $friend1->setIsBlocked(false);
-            $friend2 = new Friend();
-            $friend2->setFriend($fr_req->getUser());
-            $friend2->setUser($fr_req->getFriend());
-            $friend2->setAcceptDate(new Datetime('now'));
-            $friend2->setIsBlocked(false);
-            $em->remove($fr_req);
-            $em->persist($friend1);
-            $em->persist($friend2);
-            $em->flush();
+            if($payload["user_id"] == $UUIDService->decodeUUID($fr_req->getFriend()->getId())){
+                $friend1 = new Friend();
+                $friend1->setFriend($fr_req->getFriend());
+                $friend1->setUser($fr_req->getUser());
+                $friend1->setAcceptDate(new Datetime('now'));
+                $friend1->setIsBlocked(false);
+                $friend2 = new Friend();
+                $friend2->setFriend($fr_req->getUser());
+                $friend2->setUser($fr_req->getFriend());
+                $friend2->setAcceptDate(new Datetime('now'));
+                $friend2->setIsBlocked(false);
+                $em->remove($fr_req);
+                $em->persist($friend1);
+                $em->persist($friend2);
+                $em->flush();
+            }else{
+                return new JsonResponse(["error"=>"You can't accept this request"],403);
+            }
             return new JsonResponse(["message" => "Friend added successfully!"], 201);
         }else{
             return new JsonResponse(["error" => "Request with this id does not exist!"], 404);

@@ -32,8 +32,9 @@ class PostController extends AbstractController
     public function index(PostRepository $repo, SerializerInterface $serializer, Request $request, UUIDService $UUIDService): JsonResponse
     {
         try{
+            $payload = $request->attributes->get("payload");
             $page = $request->query->get('page', 1);
-            $qb = $repo->createFindAllQuery();
+            $qb = $repo->createFindAllQuery($UUIDService->encodeUUID($payload["user_id"]));
             $adapter = new QueryAdapter($qb);
             $pagerfanta = new Pagerfanta($adapter);
             $pagerfanta->setMaxPerPage(25);
