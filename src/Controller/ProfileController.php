@@ -58,7 +58,15 @@ class ProfileController extends AbstractController
                 }
                 $em->persist($user);
                 $em->flush();
-                return new JsonResponse(["message" => $imageType." has been updated"], 201);
+                switch($imageType){
+                    case "banner":
+                        return new JsonResponse(["message" => $imageType." has been updated","banner"=>$user->getBannerUrl()], 201);
+                        break;
+                    case "profile_pic":
+                        return new JsonResponse(["message" => $imageType." has been updated","profile_pic"=>$user->getProfilePicUrl()], 201);
+                        break;
+                }
+                
             } else{
                 return new JsonResponse(["error" => "wrong file format"], 415);
             }
@@ -84,7 +92,7 @@ class ProfileController extends AbstractController
                 $user->setBio($reqData["bio"]);
                 $em->persist($user);
                 $em->flush();
-                return new JsonResponse(["message" => "bio has been updated"], 201);
+                return new JsonResponse(["message" => "bio has been updated","bio"=>$user->getBio()], 201);
             }else{
                 return $result;
             }
@@ -107,7 +115,7 @@ class ProfileController extends AbstractController
                     $user->setTag("@".$newTag);
                     $em->persist($user);
                     $em->flush();
-                    return new JsonResponse(["message" => "user tag has been changed!"], 200);
+                    return new JsonResponse(["message" => "user tag has been changed!","tag"=>$user->getTag()], 200);
                 } else {
                     if($tmp[0]->getTag() == $user->getTag()){
                         return new JsonResponse(["message" => "You have this tag already"], 400);
