@@ -7,6 +7,7 @@ use App\Entity\Post;
 use App\Entity\User;
 use App\Repository\CommentRepository;
 use App\Service\SchemaValidator;
+use App\Service\UUIDService;
 use DateTime;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
@@ -20,19 +21,19 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 
-    /**
-     * @Route("/v1/api/comments", defaults={"_is_api": true})
-     */
+/**
+ * @Route("/v1/api/comments", defaults={"_is_api": true})
+ */
 class CommentController extends AbstractController
 {
     /**
      * @Route("/{postId}", name="get_comments", methods={"GET"})
      */
-    public function index(CommentRepository $repo, Request $request, SerializerInterface $serializer, string $postId): JsonResponse
+    public function index(CommentRepository $repo, Request $request,UUIDService $UUIDService, SerializerInterface $serializer, string $postId): JsonResponse
     {
         try{
             $page = $request->query->get('page', 1);
-            $qb = $repo->findAllComments($postId);
+            $qb = $repo->findAllComments($UUIDService->encodeUUID($postId));
             $adapter = new QueryAdapter($qb);
             $pagerfanta = new Pagerfanta($adapter);
             $pagerfanta->setMaxPerPage(25);
@@ -48,8 +49,16 @@ class CommentController extends AbstractController
                 "comments"=> $comments
             ];
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['usPosts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt", "post"]]);
-            return JsonResponse::fromJsonString($resData);
+            $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['posts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt", "post"]]);
+            $tmp = json_decode($resData, true);
+            $tmpComments = [];
+            foreach($tmp["comments"] as $c){
+                $c["id"] = $UUIDService->decodeUUID($c["id"]);
+                $c["author"]["id"] = $UUIDService->decodeUUID($c["author"]["id"]);
+                array_push($tmpComments, $c);
+            }
+            $tmp["comments"] = $tmpComments;
+            return new JsonResponse($tmp, 200);
         }catch(OutOfRangeCurrentPageException $e){
             return new JsonResponse(["message"=>"Page not found"], 404);
         }
@@ -58,9 +67,10 @@ class CommentController extends AbstractController
     /**
      * @Route("/{postId}", name="create_comment",methods={"POST"})
      */
-    public function create(Request $request, string $postId,SchemaValidator $schemaValidator):JsonResponse
+    public function create(Request $request, string $postId,SchemaValidator $schemaValidator, UUIDService $UUIDService):JsonResponse
     {
         $payload = $request->attributes->get("payload");
+        $reply_to = $request->query->get('r');
         $reqData = [];
         if($content = $request->getContent()){
             $reqData=json_decode($content, true);
@@ -68,8 +78,8 @@ class CommentController extends AbstractController
         $result = $schemaValidator->validateSchema('/../Schemas/commentSchema.json', (object)$reqData);
         if($result===true){
             $comment = new Comment();
-            $author = $this->getDoctrine()->getRepository(User::class)->find($payload['user_id']);
-            $post = $this->getDoctrine()->getRepository(Post::class)->find($postId);
+            $author = $this->getDoctrine()->getRepository(User::class)->find($UUIDService->encodeUUID($payload['user_id']));
+            $post = $this->getDoctrine()->getRepository(Post::class)->find($UUIDService->encodeUUID($postId));
             if(!$author){
                 return new JsonResponse(["error"=> "user with this id does not exist!"], 404);
             }
@@ -82,12 +92,23 @@ class CommentController extends AbstractController
             $comment->setCreatedAt(new DateTime("now"));
             $post->setCommentCount($post->getCommentCount()+1);
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($comment, "json",['ignored_attributes' => ['posts', "transitions", "password", "salt", "dateOfBirth", "roles", "email", "username","gender","post"]]);
             $em = $this->getDoctrine()->getManager();
+            if(!is_null($reply_to)){
+                $c = $em->getRepository(Comment::class)->find($UUIDService->encodeUUID($reply_to));
+                if(!is_null($c)){
+                    $comment->setReplyTo($c);
+                }else{
+                    return new JsonResponse(["error"=>"You can't reply to this comment"]);
+                }
+            }
             $em->persist($comment);
             $em->persist($post);
             $em->flush();
-            return JsonResponse::fromJsonString($resData, 201);
+            $resData = $serializer->serialize($comment, "json",['ignored_attributes' => ['posts', "transitions", "password", "salt", "dateOfBirth", "roles", "email", "username","gender","post", "verified", "bannerUrl", "bio", "timezone"]]);
+            $tmp = json_decode($resData, true);
+            $tmp["id"] = $UUIDService->decodeUUID($tmp["id"]);
+            $tmp["author"]["id"] = $UUIDService->decodeUUID($tmp["author"]["id"]);
+            return new JsonResponse($tmp, 201);
         }
         else{
             return $result;
@@ -96,7 +117,7 @@ class CommentController extends AbstractController
     /**
      * @Route("/{id}",  methods={"PUT"})
      */
-    public function edit(Request $request, string $id, SchemaValidator $schemaValidator):JsonResponse
+    public function edit(Request $request, string $id, SchemaValidator $schemaValidator, UUIDService $UUIDService):JsonResponse
     {
         $payload = $request->attributes->get("payload");
         $reqData = [];
@@ -106,8 +127,8 @@ class CommentController extends AbstractController
         $result = $schemaValidator->validateSchema('/../Schemas/commentEditSchema.json', (object)$reqData);
         if($result === true){
             $em = $this->getDoctrine()->getManager();
-            $comment = $em->getRepository(Comment::class)->find($id);
-            if($comment->getAuthor()->getId() == $payload['user_id']){
+            $comment = $em->getRepository(Comment::class)->find($UUIDService->encodeUUID($id));
+            if($comment->getAuthor()->getId() == $UUIDService->encodeUUID($payload['user_id'])){
                 if(!$comment){
                     return new JsonResponse(["error"=>"comment does not exist!"], 404);
                 }
@@ -115,7 +136,12 @@ class CommentController extends AbstractController
                 $comment->setEditedAt(new DateTime("now"));
                 $em->persist($comment);
                 $em->flush();
-                return new JsonResponse(["message"=>"comment has been edited"], 200);
+                $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+                $resData = $serializer->serialize($comment, "json",['ignored_attributes' => ['posts', "transitions", "password", "salt", "dateOfBirth", "roles", "email", "username","gender","post", "verified", "bannerUrl", "bio", "timezone"]]);
+                $tmp = json_decode($resData, true);
+                $tmp["id"] = $UUIDService->decodeUUID($tmp["id"]);
+                $tmp["author"]["id"] = $UUIDService->decodeUUID($tmp["author"]["id"]);
+                return new JsonResponse(["message"=>"comment has been edited","comment" => $tmp], 200);
             } else {
                 return new JsonResponse(["error"=>"This comment does not belong to you"], 403);
             }
@@ -126,16 +152,16 @@ class CommentController extends AbstractController
     /**
      * @Route("/{id}", name="delete_comment", methods={"DELETE"})
      */
-    public function remove(Request $request, string $id) :JsonResponse
+    public function remove(Request $request, string $id, UUIDService $UUIDService) :JsonResponse
     {
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
-        $comment = $em->getRepository(Comment::class)->find($id);
+        $comment = $em->getRepository(Comment::class)->find($UUIDService->encodeUUID($id));
         if(!$comment){
             dump($comment);
             return new JsonResponse(["message"=>"Comment does not exist"], 404);
         }
-        if($comment->getAuthor()->getId() == $payload['user_id']){
+        if($comment->getAuthor()->getId() == $UUIDService->encodeUUID($payload['user_id'])){
             $post = $comment->getPost();
             $post->setCommentCount($post->getCommentCount()-1);
             $em->remove($comment);
@@ -144,6 +170,43 @@ class CommentController extends AbstractController
             return new JsonResponse(["message"=>"Comment has been deleted"], 200);
         } else {
             return new JsonResponse(["error"=>"This comment does not belong to you"], 403);
+        }
+    }
+    /**
+     * @Route("/{postId}/{commentId}", name="get_replis", methods={"GET"})
+     */
+    public function get_replies(CommentRepository $repo, Request $request,UUIDService $UUIDService, SerializerInterface $serializer, string $postId, string $commentId): JsonResponse
+    {
+        try{
+            $page = $request->query->get('page', 1);
+            $qb = $repo->findAllReplies($UUIDService->encodeUUID($postId),$UUIDService->encodeUUID($commentId));
+            $adapter = new QueryAdapter($qb);
+            $pagerfanta = new Pagerfanta($adapter);
+            $pagerfanta->setMaxPerPage(25);
+            $pagerfanta->setCurrentPage($page);
+            $replies = array();
+            foreach($pagerfanta->getCurrentPageResults() as $reply){
+                $replies[] = $reply;
+            }
+            $data = [
+                "page"=> $page,
+                "totalPages" => $pagerfanta->getNbPages(),
+                "count" => $pagerfanta->getNbResults(),
+                "replies"=> $replies
+            ];
+            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+            $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['posts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt", "post", "replyTo"]]);
+            $tmp = json_decode($resData, true);
+            $tmpRelpies = [];
+            foreach($tmp["replies"] as $c){
+                $c["id"] = $UUIDService->decodeUUID($c["id"]);
+                $c["author"]["id"] = $UUIDService->decodeUUID($c["author"]["id"]);
+                array_push($tmpRelpies, $c);
+            }
+            $tmp["replies"] = $tmpRelpies;
+            return new JsonResponse($tmp, 200);
+        }catch(OutOfRangeCurrentPageException $e){
+            return new JsonResponse(["message"=>"Page not found"], 404);
         }
     }
 }

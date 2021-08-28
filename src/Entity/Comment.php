@@ -45,16 +45,10 @@ class Comment
     private $co_edited_at;
 
     /**
-     * @ORM\OneToOne(targetEntity=Comment::class, inversedBy="co_reply", cascade={"persist", "remove"})
+     * @ORM\ManyToOne(targetEntity=Comment::class)
      * @ORM\JoinColumn(name="co_reply_to",referencedColumnName = "co_id", nullable=true)
      */
     private $co_reply_to;
-
-    /**
-     * @ORM\OneToOne(targetEntity=Comment::class, mappedBy="co_reply_to", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(name="co_reply",referencedColumnName = "co_id", nullable=true)
-     */
-    private $co_reply;
 
     public function getId(): ?string
     {
@@ -129,29 +123,6 @@ class Comment
     public function setReplyTo(?self $co_reply_to): self
     {
         $this->co_reply_to = $co_reply_to;
-
-        return $this;
-    }
-
-    public function getReplies(): ?self
-    {
-        return $this->co_reply;
-    }
-
-    public function setReplies(?self $co_reply): self
-    {
-        // unset the owning side of the relation if necessary
-        if ($co_reply === null && $this->co_reply !== null) {
-            $this->co_reply->setCoReplyTo(null);
-        }
-
-        // set the owning side of the relation if necessary
-        if ($co_reply !== null && $co_reply->getReplyTo() !== $this) {
-            $co_reply->setReplyTo($this);
-        }
-
-        $this->co_replies = $co_reply;
-
         return $this;
     }
 }

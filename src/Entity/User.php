@@ -81,6 +81,11 @@ class User implements UserInterface
      */
     private $us_bio;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $us_tag;
+
     public function __construct()
     {
         $this->us_posts = new ArrayCollection();
@@ -250,7 +255,6 @@ class User implements UserInterface
     public function setVerified(bool $us_verified): self
     {
         $this->us_verified = $us_verified;
-
         return $this;
     }
 
@@ -262,7 +266,6 @@ class User implements UserInterface
     public function setProfilePicUrl(string $us_profile_pic_url): self
     {
         $this->us_profile_pic_url = $us_profile_pic_url;
-
         return $this;
     }
 
@@ -274,7 +277,6 @@ class User implements UserInterface
     public function setBannerUrl(?string $us_banner_url): self
     {
         $this->us_banner_url = $us_banner_url;
-
         return $this;
     }
 
@@ -286,7 +288,17 @@ class User implements UserInterface
     public function setBio(?string $us_bio): self
     {
         $this->us_bio = $us_bio;
+        return $this;
+    }
 
+    public function getTag(): ?string
+    {
+        return $this->us_tag;
+    }
+
+    public function setTag(string $us_tag): self
+    {
+        $this->us_tag = $us_tag;
         return $this;
     }
 }

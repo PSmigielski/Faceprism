@@ -1,9 +1,9 @@
 <?php
     namespace App\Service;
 
-use Cloudinary\Api\Upload\UploadApi;
-use Cloudinary\Configuration\Configuration;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
+    use Cloudinary\Api\Upload\UploadApi;
+    use Cloudinary\Configuration\Configuration;
+    use Symfony\Component\HttpFoundation\File\UploadedFile;
  
     class ImageUploader
     {

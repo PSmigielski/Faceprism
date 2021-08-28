@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Post;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -19,9 +20,9 @@ class PostRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Post::class);
     }
-    public function createFindAllQuery() : QueryBuilder
+    public function createFindAllQuery(string $userID) : QueryBuilder
     {
-        return $this->createQueryBuilder('p')->orderBy('p.po_created_at',"DESC");
+        return $this->createQueryBuilder("p")->leftJoin("App\Entity\Friend", "f", Join::WITH,"f.fr_friend=p.po_author")->where("f.fr_user = :id")->orderBy('p.po_created_at',"DESC")->setParameter("id", $userID);
     }
     // /**
     //  * @return Post[] Returns an array of Post objects
@@ -38,9 +39,7 @@ class PostRepository extends ServiceEntityRepository
             ->getResult()
         ;
     }
-    */
 
-    /*
     public function findOneBySomeField($value): ?Post
     {
         return $this->createQueryBuilder('p')

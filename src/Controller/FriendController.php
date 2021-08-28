@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Friend;
 use App\Repository\FriendRepository;
+use App\Service\UUIDService;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
 use Pagerfanta\Pagerfanta;
@@ -23,12 +24,12 @@ class FriendController extends AbstractController
     /**
      * @Route("", methods={"GET"})
      */
-    public function index(FriendRepository $repo, Request $request) : JsonResponse
+    public function index(FriendRepository $repo, Request $request, UUIDService $UUIDService) : JsonResponse
     {
         try{
             $payload = $request->attributes->get("payload");
             $page = $request->query->get('page', 1);
-            $qb = $repo->createGetAllFriends($payload["user_id"]);
+            $qb = $repo->createGetAllFriends($UUIDService->encodeUUID($payload["user_id"]));
             $adapter = new QueryAdapter($qb);
             $pagerfanta = new Pagerfanta($adapter);
             $pagerfanta->setMaxPerPage(30);
@@ -41,10 +42,10 @@ class FriendController extends AbstractController
                 "page"=> $page,
                 "totalPages" => $pagerfanta->getNbPages(),
                 "count" => $pagerfanta->getNbResults(),
-                "requests"=> $requests
+                "friends"=> $requests
             ];
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['usPosts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt", "post", "user", "id"]]);
+            $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['posts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt", "post", "user", "id"]]);
             return JsonResponse::fromJsonString($resData, 200);
         }
         catch(OutOfRangeCurrentPageException $e){
@@ -52,13 +53,13 @@ class FriendController extends AbstractController
         }
     }
     /**
-     * @Route("/{friendID}", methods={"PUT"})
+     * @Route("/blocklist/{friendID}", methods={"PUT"})
      */
-    public function block(Request $req, string $friendID) : JsonResponse
+    public function block(Request $req, string $friendID, UUIDService $UUIDService) : JsonResponse
     {
         $payload = $req->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
-        $friend = $em->getRepository(Friend::class)->findBy(["fr_user"=>$payload["user_id"], "fr_friend"=>$friendID]);
+        $friend = $em->getRepository(Friend::class)->findBy(["fr_user"=>$UUIDService->encodeUUID($payload["user_id"]), "fr_friend"=>$UUIDService->encodeUUID($friendID)]);
         if(!$friend){
             return new JsonResponse(["error"=>"this relation does not exist!"], 404);
         }else{
@@ -66,42 +67,42 @@ class FriendController extends AbstractController
                 $friend[0]->setIsBlocked(false);
                 $em->persist($friend[0]);
                 $em->flush();
-                return new JsonResponse(["friend has been unblocked successfully!"]);
+                return new JsonResponse(["message"=>"friend has been unblocked successfully!"]);
             }else{
                 $friend[0]->setIsBlocked(true);
                 $em->persist($friend[0]);
                 $em->flush();
-                return new JsonResponse(["friend has been blocked successfully!"]);
+                return new JsonResponse(["message"=>"friend has been blocked successfully!"]);
             }
         }
     }
     /**
-     * @Route("/{friendID}", methods={"DELETE"})
+     * @Route("/remove/{friendID}", methods={"DELETE"})
      */
-    public function remove(Request $req, string $friendID) : JsonResponse
+    public function remove(Request $req, string $friendID, UUIDService $UUIDService) : JsonResponse
     {
         $payload = $req->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
-        $friend1 = $em->getRepository(Friend::class)->findBy(["fr_user"=>$payload["user_id"], "fr_friend"=>$friendID]);
-        $friend2 = $em->getRepository(Friend::class)->findBy(["fr_user"=>$friendID, "fr_friend"=>$payload["user_id"]]);
+        $friend1 = $em->getRepository(Friend::class)->findBy(["fr_user"=>$UUIDService->encodeUUID($payload["user_id"]), "fr_friend"=>$UUIDService->encodeUUID($friendID)]);
+        $friend2 = $em->getRepository(Friend::class)->findBy(["fr_user"=>$UUIDService->encodeUUID($friendID), "fr_friend"=>$UUIDService->encodeUUID($payload["user_id"])]);
         if(!$friend1 || !$friend1){
             return new JsonResponse(["error"=>"this relation does not exist!"], 404);
         }else{
             $em->remove($friend1[0]);
             $em->remove($friend2[0]);
             $em->flush();
-            return new JsonResponse(["friend has been removed successfully!"]);
+            return new JsonResponse(["message"=>"friend has been removed successfully!"]);
         }
     }
     /**
      * @Route("/blocklist", methods={"GET"})
      */
-    public function get_blocked(FriendRepository $repo, Request $request) : JsonResponse
+    public function get_blocked(FriendRepository $repo, Request $request, UUIDService $UUIDService) : JsonResponse
     {
         try{
             $payload = $request->attributes->get("payload");
             $page = $request->query->get('page', 1);
-            $qb = $repo->createGetAllBlockedFriends($payload["user_id"]);
+            $qb = $repo->createGetAllBlockedFriends($UUIDService->encodeUUID($payload["user_id"]));
             $adapter = new QueryAdapter($qb);
             $pagerfanta = new Pagerfanta($adapter);
             $pagerfanta->setMaxPerPage(30);

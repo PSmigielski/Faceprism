@@ -19,7 +19,10 @@ class CommentRepository extends ServiceEntityRepository
         parent::__construct($registry, Comment::class);
     }
     public function findAllComments(string $postId){
-        return $this->createQueryBuilder('c')->where("c.co_post = :id")->orderBy("c.co_created_at","ASC")->setParameter('id', $postId);
+        return $this->createQueryBuilder('c')->where("c.co_post = :id")->andWhere("c.co_reply_to IS NULL")->orderBy("c.co_created_at","ASC")->setParameter('id', $postId);
+    }
+    public function findAllReplies(string $postId, string $commentId){
+        return $this->createQueryBuilder('c')->where("c.co_post = :poId")->andWhere("c.co_reply_to = :coId")->orderBy("c.co_created_at","ASC")->setParameter('poId', $postId)->setParameter('coId', $commentId);
     }
     // /**
     //  * @return Comment[] Returns an array of Comment objects

@@ -4,6 +4,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Event\UserCreateEvent;
 use App\Service\SchemaValidator;
+use App\Service\UUIDService;
 use DateTime;
 use Gesdinet\JWTRefreshTokenBundle\Entity\RefreshToken;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
@@ -59,6 +60,7 @@ class AuthController extends AbstractController
                 $user->setRoles([]);
                 $user->setVerified(false);
                 $user->setProfilePicUrl("https://res.cloudinary.com/faceprism/image/upload/v1626432519/profile_pics/default_bbdyw0.png");
+                $user->setTag("@".$reqData['email']);
                 $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
                 $resData = $serializer->serialize($user, "json",['ignored_attributes' => ['usPosts', "transitions","timezone"]]);
                 $em->persist($user);
@@ -78,10 +80,10 @@ class AuthController extends AbstractController
     /**
      * @Route("/account", methods={"DELETE"})
      */
-    public function remove(Request $request) : JsonResponse{
+    public function remove(Request $request, UUIDService $UUIDService) : JsonResponse{
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
-        $user = $em->getRepository(User::class)->find($payload["user_id"]);
+        $user = $em->getRepository(User::class)->find($UUIDService->encodeUUID($payload["user_id"]));
         if(!$user){
             return new JsonResponse(["error" => "User with this id does not exist!"], 404);
         }
@@ -92,7 +94,7 @@ class AuthController extends AbstractController
     /**
      * @Route("/account", methods={"PUT"})
      */
-    public function updateAccount(Request $request,SchemaValidator $schemaValidator) : JsonResponse{
+    public function updateAccount(Request $request,SchemaValidator $schemaValidator, UUIDService $UUIDService) : JsonResponse{
         $reqData = [];
         $payload = $request->attributes->get("payload");
         if($content = $request->getContent()){
@@ -101,7 +103,7 @@ class AuthController extends AbstractController
         $result = $schemaValidator->validateSchema('/../Schemas/editAccountDataSchema.json', (object)$reqData);
         if($result === true){
             $em = $this->getDoctrine()->getManager();
-            $user = $em->getRepository(User::class)->find($payload["user_id"]);
+            $user = $em->getRepository(User::class)->find($UUIDService->encodeUUID($payload["user_id"]));
             if(!$user){
                 return new JsonResponse(["error" => "User with this id does not exist!"], 404);
             }
