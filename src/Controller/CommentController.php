@@ -22,12 +22,12 @@ use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 
 /**
- * @Route("/v1/api", defaults={"_is_api": true})
+ * @Route("/v1/api/comments", defaults={"_is_api": true})
  */
 class CommentController extends AbstractController
 {
     /**
-     * @Route("/comments/{postId}", name="get_comments", methods={"GET"})
+     * @Route("/{postId}", name="get_comments", methods={"GET"})
      */
     public function index(CommentRepository $repo, Request $request,UUIDService $UUIDService, SerializerInterface $serializer, string $postId): JsonResponse
     {
@@ -65,7 +65,7 @@ class CommentController extends AbstractController
 
     }
     /**
-     * @Route("/comments/{postId}", name="create_comment",methods={"POST"})
+     * @Route("/{postId}", name="create_comment",methods={"POST"})
      */
     public function create(Request $request, string $postId,SchemaValidator $schemaValidator, UUIDService $UUIDService):JsonResponse
     {
@@ -115,7 +115,7 @@ class CommentController extends AbstractController
         }
     }
     /**
-     * @Route("/comments/{id}",  methods={"PUT"})
+     * @Route("/{id}",  methods={"PUT"})
      */
     public function edit(Request $request, string $id, SchemaValidator $schemaValidator, UUIDService $UUIDService):JsonResponse
     {
@@ -150,7 +150,7 @@ class CommentController extends AbstractController
         }
     }
     /**
-     * @Route("/comments/{id}", name="delete_comment", methods={"DELETE"})
+     * @Route("/{id}", name="delete_comment", methods={"DELETE"})
      */
     public function remove(Request $request, string $id, UUIDService $UUIDService) :JsonResponse
     {
@@ -173,7 +173,7 @@ class CommentController extends AbstractController
         }
     }
     /**
-     * @Route("/comments/{postId}/{commentId}", name="get_replis", methods={"GET"})
+     * @Route("/{postId}/{commentId}", name="get_replis", methods={"GET"})
      */
     public function get_replies(CommentRepository $repo, Request $request,UUIDService $UUIDService, SerializerInterface $serializer, string $postId, string $commentId): JsonResponse
     {
