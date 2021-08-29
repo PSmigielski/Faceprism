@@ -21,7 +21,7 @@ class FriendRequestRepository extends ServiceEntityRepository
     }
     public function createGetAllFriendRequests(string $userID) :QueryBuilder
     {
-        return $this->createQueryBuilder('fq')->where('fq.fr_req_user = :id')->setParameter('id', $userID);
+        return $this->createQueryBuilder('fq')->where('fq.fr_req_friend = :id')->setParameter('id', $userID);
     }
     // /**
     //  * @return FriendRequest[] Returns an array of FriendRequest objects

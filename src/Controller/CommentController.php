@@ -154,11 +154,13 @@ class CommentController extends AbstractController
         }
         if($comment->getAuthor()->getId() == UUIDService::encodeUUID($payload['user_id'])){
             $post = $comment->getPost();
-            $post->setCommentCount($post->getCommentCount()-1);
             if(!is_null($comment->getReplyTo())){
                 $c = $em->getRepository(Comment::class)->find($comment->getReplyTo()->getId());
                 $c->setRepliesCount($c->getRepliesCount()-1);
+                $post->setCommentCount($post->getCommentCount()-1);
                 $em->persist($c);
+            }else{
+                $post->setCommentCount($post->getCommentCount() - $comment->getRepliesCount() - 1);
             }
             $em->remove($comment);
             $em->persist($post);
