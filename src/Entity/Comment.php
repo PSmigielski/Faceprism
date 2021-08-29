@@ -46,9 +46,14 @@ class Comment
 
     /**
      * @ORM\ManyToOne(targetEntity=Comment::class)
-     * @ORM\JoinColumn(name="co_reply_to",referencedColumnName = "co_id", nullable=true)
+     * @ORM\JoinColumn(name="co_reply_to",referencedColumnName = "co_id", nullable=true,onDelete="CASCADE")
      */
     private $co_reply_to;
+
+    /**
+     * @ORM\Column(type="integer")
+     */
+    private $co_replies_count;
 
     public function getId(): ?string
     {
@@ -123,6 +128,18 @@ class Comment
     public function setReplyTo(?self $co_reply_to): self
     {
         $this->co_reply_to = $co_reply_to;
+        return $this;
+    }
+
+    public function getRepliesCount(): ?int
+    {
+        return $this->co_replies_count;
+    }
+
+    public function setRepliesCount(int $co_replies_count): self
+    {
+        $this->co_replies_count = $co_replies_count;
+
         return $this;
     }
 }

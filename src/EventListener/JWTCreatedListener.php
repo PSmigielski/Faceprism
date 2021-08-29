@@ -7,10 +7,8 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 class JWTCreatedListener{
     private RequestStack $requestStack;
-    private UUIDService $UUIDService;
-    public function __construct(RequestStack $requestStack, UUIDService $UUIDService)
+    public function __construct(RequestStack $requestStack)
     {
-        $this->UUIDService = $UUIDService;
         $this->requestStack = $requestStack;
     }
 
@@ -18,7 +16,7 @@ class JWTCreatedListener{
     {
         $user = $event->getUser();
         $payload = $event->getData();
-        $payload['user_id'] = $this->UUIDService->decodeUUID($user->getId());
+        $payload['user_id'] = UUIDService::decodeUUID($user->getId());
         $event->setData($payload);
     }
 }
