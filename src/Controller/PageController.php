@@ -6,6 +6,7 @@ use App\Entity\Page;
 use App\Entity\User;
 use App\Repository\PageRepository;
 use App\Service\ImageUploader;
+use App\Service\SchemaValidator;
 use App\Service\UUIDService;
 use PaginationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -73,7 +74,7 @@ class PageController extends AbstractController
     /**
      * @Route("",name="create_page", methods={"POST"})
      */
-    public function create(Request $request, ImageUploader $imageUploader) : JsonResponse 
+    public function create(Request $request, ImageUploader $imageUploader, SchemaValidator $schemaValidator) : JsonResponse 
     {
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
@@ -91,44 +92,21 @@ class PageController extends AbstractController
             $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
             $page->setOwner($user);
             if(!is_null($bio)){
-                if(strlen($bio) < 256){
-                    $page->setBio($bio);
-                }else{
-                    return new JsonResponse(["error"=>"bio is too long"],400);
-                }
+                if($schemaValidator->validateFormData($bio, "bio")===true){$page->setBio($bio);}else{return $schemaValidator->validateFormData($bio, "bio");}
             }
             if(!is_null($email)){
-                if(preg_match("/^(([^<>()\[\]\\.,;:\s@\"]+(\.[^<>()\[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/", $email) === 1){
-                    $page->setEmail($email);
-                } else {
-                    return new JsonResponse(["error"=>"wrong email format"],400);
-                }
+                if($schemaValidator->validateFormData($email, "email")===true){$page->setEmail($email);}else{return $schemaValidator->validateFormData($email, "email");}
             }
             if(!is_null($website)){
-                if(preg_match("/(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})$/", $website) === 1){
-                    $page->setWebsite($website);
-                }
-                else {
-                    return new JsonResponse(["error"=>"wrong link format"],400);
-                }
+                if($schemaValidator->validateFormData($website, "website")===true){$page->setWebsite($website);}else{return $schemaValidator->validateFormData($website, "website");}
             }
             if(!is_null($profile_pic)){
-                if(strpos($request->files->get("profile_pic")->getMimeType(), 'image') !== false){
-                    $page->setProfilePicUrl($imageUploader->uploadFileToCloudinary($request->files->get("profile_pic"), 200, 200,"profile_pic"));
-                }
-                else {
-                    return new JsonResponse(["error"=>"wrong file format"],400);
-                }
+                if($schemaValidator->validateFormData($profile_pic, "profile_pic")===true){$page->setProfilePicUrl($imageUploader->uploadFileToCloudinary($profile_pic, 200, 200,"profile_pic"));}else{return $schemaValidator->validateFormData($profile_pic, "profile_pic");}
             }else{
                 $page->setProfilePicUrl("https://res.cloudinary.com/faceprism/image/upload/v1626432519/profile_pics/default_bbdyw0.png");
             }
             if(!is_null($banner)){
-                if(strpos($request->files->get("banner")->getMimeType(), 'image') !== false){
-                    $page->setBannerUrl($imageUploader->uploadFileToCloudinary($request->files->get("banner"), 820, 312,"banner"));
-                }
-                else {
-                    return new JsonResponse(["error"=>"wrong file format"],400);
-                }
+                if($schemaValidator->validateFormData($banner, "banner")===true){$page->setBannerUrl($imageUploader->uploadFileToCloudinary($profile_pic, 820, 312,"banner"));}else{return $schemaValidator->validateFormData($banner, "banner");}
             }
             $page->setFollowCount(0);
             $em->persist($page);

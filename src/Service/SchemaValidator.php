@@ -5,6 +5,7 @@ use DateTime;
 use Opis\JsonSchema\{
     Validator, Schema
 };
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class SchemaValidator
@@ -21,14 +22,49 @@ class SchemaValidator
         }
     }
     static public function verifyDate($date, $strict = true) : bool{
-    $dateTime = DateTime::createFromFormat('Y-m-d', $date);
-    if ($strict) {
-        $errors = DateTime::getLastErrors();
-        if (!empty($errors['warning_count'])) {
-            return false;
+        $dateTime = DateTime::createFromFormat('Y-m-d', $date);
+        if ($strict) {
+            $errors = DateTime::getLastErrors();
+            if (!empty($errors['warning_count'])) {
+                return false;
+            }
         }
+        return $dateTime !== false;
     }
-    return $dateTime !== false;
+    public function validateFormData(string | UploadedFile $value, string $key) : JsonResponse | bool
+    {
+        switch($key){
+            case "email":
+                if(preg_match("/^(([^<>()\[\]\\.,;:\s@\"]+(\.[^<>()\[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/", $value) === 1){
+                    return true;
+                } else {
+                    return new JsonResponse(["error"=>"wrong email format"],400);
+                }
+                break;
+            case "website":
+                if(preg_match("/(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})$/", $value) === 1){
+                    return true;
+                }
+                else {
+                    return new JsonResponse(["error"=>"wrong link format"],400);
+                }
+                break;
+            case "profile_pic":
+            case "banner":
+                if(strpos($value->getMimeType(), 'image') !== false){
+                    return true;
+                }else{
+                    return new JsonResponse(["error"=>"wrong file format"],400);
+                }
+                break;
+            case "bio":
+                if(strlen($value) < 256){
+                    return true;
+                }else{
+                    return new JsonResponse(["error"=>"bio is too long"],400);
+                }
+                break;
+        }
     }
     private function getErrorMessage(object $result) : JsonResponse {
         switch($result->getFirstError()->keyword()){
