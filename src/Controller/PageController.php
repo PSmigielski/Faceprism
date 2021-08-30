@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Controller;
+
+use App\Entity\Page;
 use App\Repository\PageRepository;
 use App\Service\UUIDService;
 use PaginationService;
@@ -18,7 +20,7 @@ use Symfony\Component\Serializer\Serializer;
 class PageController extends AbstractController
 {
     /**
-     * @Route("", name="get_pages_for_user", defaults={"_is_api": true})
+     * @Route("", name="get_pages_for_user", methods={"GET"})
      */
     public function index(Request $request, PageRepository $repo):JsonResponse
     {
@@ -43,6 +45,27 @@ class PageController extends AbstractController
             return new JsonResponse($data, 200);
         } else{
             return $data;
+        }
+    }
+    /**
+     * @Route("/{pageId}",name="get_page", methods={"GET"})
+     */
+    public function show(string $pageId):JsonResponse
+    {
+        $em = $this->getDoctrine()->getManager();
+        $page = $em->getRepository(Page::class)->find(UUIDService::encodeUUID($pageId));
+        if(is_null($page)){
+            return new JsonResponse(["error"=>"Page with this id does not exist"], 404);
+        }else{
+            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+            $resData = $serializer->serialize($page, "json",['ignored_attributes' => ["owner"]]);
+            $resDataUser = $serializer->serialize($page->getOwner(), "json",['ignored_attributes' => ['posts', "dateOfBirth", "password", "email", "username","roles","gender", "salt", "post","verified", "bio", "bannerUrl"]]);
+            $tmpuser = json_decode($resDataUser, true);
+            $tmp = json_decode($resData, true);
+            $tmpuser["id"] = UUIDService::decodeUUID($tmpuser["id"]);
+            $tmp["id"] = UUIDService::decodeUUID($tmp["id"]);
+            $tmp["owner"] = $tmpuser;
+            return new JsonResponse($tmp, 200);
         }
     }
 }
