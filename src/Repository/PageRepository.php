@@ -4,7 +4,9 @@ namespace App\Repository;
 
 use App\Entity\Page;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use PDO;
 
 /**
  * @method Page|null find($id, $lockMode = null, $lockVersion = null)
@@ -18,7 +20,10 @@ class PageRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Page::class);
     }
-
+    public function getAllPagesForUser(string $userId):QueryBuilder
+    {
+        return $this->createQueryBuilder('pa')->where("pa.pa_owner = :id")->orderBy("pa.pa_name", "DESC")->setParameter("id",$userId);
+    }
     // /**
     //  * @return Page[] Returns an array of Page objects
     //  */

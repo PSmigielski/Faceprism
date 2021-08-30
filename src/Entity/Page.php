@@ -58,7 +58,7 @@ class Page
      */
     private $pa_owner;
 
-    public function getId(): ?int
+    public function getId(): ?string
     {
         return $this->pa_id;
     }
