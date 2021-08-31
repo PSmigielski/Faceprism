@@ -8,6 +8,7 @@ use App\Repository\PageRepository;
 use App\Service\ImageUploader;
 use App\Service\SchemaValidator;
 use App\Service\UUIDService;
+use Opis\JsonSchema\MediaTypes\Json;
 use PaginationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -120,6 +121,25 @@ class PageController extends AbstractController
             $tmp["id"] = UUIDService::decodeUUID($tmp["id"]);
             $tmp["owner"]["id"] = UUIDService::decodeUUID($tmp["owner"]["id"]);
             return new JsonResponse($tmp, 201);
+        }
+    }
+    /**
+     * @Route("/{pageId}",name="remove_page", methods={"POST"})
+     */
+    public function remove(Request $request, string $pageId): JsonResponse
+    {
+        $payload = $request->attributes->get("payload");
+        $em = $this->getDoctrine()->getManager();
+        $page = $em->getRepository(Page::class)->find(UUIDService::encodeUUID($pageId));
+        if(!is_null($page)){
+            if($page->getOwner()->getId() === UUIDService::encodeUUID($payload["user_id"])){
+
+                return new JsonResponse(["message"=>"Page has been deleted!"], 204);
+            }else{
+                return new JsonResponse(["error"=>"This page does not belongs to you"], 403);
+            }
+        }else{
+            return new JsonResponse(["error"=>"Page with this id does not exist!"], 404);
         }
     }
 }

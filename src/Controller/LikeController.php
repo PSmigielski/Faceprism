@@ -11,27 +11,27 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
     /**
-     * @Route("/v1/api/like", defaults={"_is_api": true})
+     * @Route("/v1/api/like", defaults={"_is_api": true}, requirements={"id"="[0-9a-f]{32}"})
      */
 class LikeController extends AbstractController
 {   
     /**
-     * @Route("/{postID}", methods={"POST"})
+     * @Route("/{id}", name="like_post", methods={"POST"})
      */
-    public function index(string $postID, Request $request) : JsonResponse
+    public function index(string $id, Request $request) : JsonResponse
     {
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
         $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
-        $post = $em->getRepository(Post::class)->find(UUIDService::encodeUUID($postID));
+        $post = $em->getRepository(Post::class)->find(UUIDService::encodeUUID($id));
         if(!$user){
             return new JsonResponse(["error"=>"user with this id doesn't exist!"], 400);
         }
         if(!$post){
             return new JsonResponse(["error"=>"post with this id doesn't exist!"], 400);
         }
-        if($em->getRepository(Like::class)->findBy(["li_post"=>UUIDService::encodeUUID($postID),"li_user"=>UUIDService::encodeUUID($payload["user_id"])])){
-            $like = $em->getRepository(Like::class)->findBy(["li_post"=>UUIDService::encodeUUID($postID),"li_user"=>UUIDService::encodeUUID($payload["user_id"])]);
+        if($em->getRepository(Like::class)->findBy(["li_post"=>UUIDService::encodeUUID($id),"li_user"=>UUIDService::encodeUUID($payload["user_id"])])){
+            $like = $em->getRepository(Like::class)->findBy(["li_post"=>UUIDService::encodeUUID($id),"li_user"=>UUIDService::encodeUUID($payload["user_id"])]);
             $em->remove($like[0]);
             $post->setLikeCount($post->getLikeCount()-1);
             $em->persist($post);

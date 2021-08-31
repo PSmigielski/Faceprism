@@ -20,7 +20,7 @@ use Symfony\Component\Serializer\Serializer;
 class FriendController extends AbstractController
 {
     /**
-     * @Route("", methods={"GET"})
+     * @Route("",name="get_friends", methods={"GET"})
      */
     public function index(FriendRepository $repo, Request $request) : JsonResponse
     {
@@ -45,7 +45,7 @@ class FriendController extends AbstractController
         }
     }
     /**
-     * @Route("/blocklist/{friendID}", methods={"PUT"})
+     * @Route("/blocklist/{friendID}",name="get_blocked_friends", methods={"PUT"})
      */
     public function block(string $friendID) : JsonResponse
     {
@@ -68,14 +68,14 @@ class FriendController extends AbstractController
         }
     }
     /**
-     * @Route("/remove/{friendID}", methods={"DELETE"})
+     * @Route("/{id}",name="delete_friend", methods={"DELETE"},requirements={"id"="[0-9a-f]{32}"})
      */
-    public function remove(Request $req, string $friendID) : JsonResponse
+    public function remove(Request $req, string $id) : JsonResponse
     {
         $payload = $req->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
-        $friend1 = $em->getRepository(Friend::class)->findBy(["fr_user"=>UUIDService::encodeUUID($payload["user_id"]), "fr_friend"=>UUIDService::encodeUUID($friendID)]);
-        $friend2 = $em->getRepository(Friend::class)->findBy(["fr_user"=>UUIDService::encodeUUID($friendID), "fr_friend"=>UUIDService::encodeUUID($payload["user_id"])]);
+        $friend1 = $em->getRepository(Friend::class)->findBy(["fr_user"=>UUIDService::encodeUUID($payload["user_id"]), "fr_friend"=>UUIDService::encodeUUID($id)]);
+        $friend2 = $em->getRepository(Friend::class)->findBy(["fr_user"=>UUIDService::encodeUUID($id), "fr_friend"=>UUIDService::encodeUUID($payload["user_id"])]);
         if(!$friend1 || !$friend1){
             return new JsonResponse(["error"=>"this relation does not exist!"], 404);
         }else{
@@ -86,7 +86,7 @@ class FriendController extends AbstractController
         }
     }
     /**
-     * @Route("/blocklist", methods={"GET"})
+     * @Route("/blocklist",name="block_friend", methods={"GET"})
      */
     public function get_blocked(FriendRepository $repo, Request $request) : JsonResponse
     {

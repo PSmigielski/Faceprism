@@ -23,7 +23,7 @@ use Symfony\Component\Serializer\Serializer;
 class FriendRequestController extends AbstractController
 {
     /**
-     * @Route("", methods={"GET"})
+     * @Route("",name="get_friend_requests", methods={"GET"})
      */
     public function index(FriendRequestRepository $repo, Request $request): JsonResponse
     {
@@ -49,7 +49,7 @@ class FriendRequestController extends AbstractController
         }
     }
     /**
-     * @Route("/{friendID}", methods={"POST"})
+     * @Route("/{friendID}",name="add_friend_request", methods={"POST"})
      */
     public function add(Request $req, string $friendID):JsonResponse
     {
@@ -88,7 +88,7 @@ class FriendRequestController extends AbstractController
         }
     }
     /**
-     * @Route("/accept/{requestID}", methods={"POST"})
+     * @Route("/accept/{requestID}",name="accept_friend_request" , methods={"POST"})
      */
     public function accept(Request $req, string $requestID) :JsonResponse
     { 
@@ -120,7 +120,7 @@ class FriendRequestController extends AbstractController
         }
     }
     /**
-     * @Route("/reject/{requestID}", methods={"DELETE"})
+     * @Route("/reject/{requestID}",name="reject_friend_request" , methods={"DELETE"})
      */
     public function reject(string $requestID) :JsonResponse
     {

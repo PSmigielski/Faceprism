@@ -29,13 +29,13 @@ class AuthController extends AbstractController
         $this->eventDispatcher = $eventDispatcher;
     }
     /**
-     * @Route("/login")
+     * @Route("/login", name="auth_login")
      */
     public function login(Request $req)
     {
     }
     /**
-     * @Route("/register")
+     * @Route("/register", name="auth_register")
      */
     public function add(Request $req,SchemaValidator $schemaValidator, UserPasswordEncoderInterface $passEnc) : JsonResponse
     {  
@@ -78,7 +78,7 @@ class AuthController extends AbstractController
 
     }
     /**
-     * @Route("/account", methods={"DELETE"})
+     * @Route("/account", name="auth_remove_account", methods={"DELETE"})
      */
     public function remove(Request $request, UUIDService $UUIDService) : JsonResponse{
         $payload = $request->attributes->get("payload");
@@ -92,7 +92,7 @@ class AuthController extends AbstractController
         return new JsonResponse(["message"=>"User has been deleted"], 201);
     }
     /**
-     * @Route("/account", methods={"PUT"})
+     * @Route("/account", name="auth_update_account", methods={"PUT"})
      */
     public function updateAccount(Request $request,SchemaValidator $schemaValidator, UUIDService $UUIDService) : JsonResponse{
         $reqData = [];
@@ -130,7 +130,7 @@ class AuthController extends AbstractController
 
     }
     /**
-     * @Route("/logout", methods={"POST"})
+     * @Route("/logout", name="auth_logout", methods={"POST"})
      */
     public function logout(Request $request, JWTEncoderInterface $token) : JsonResponse
     {

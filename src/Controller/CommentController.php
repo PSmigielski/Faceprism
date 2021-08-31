@@ -104,7 +104,7 @@ class CommentController extends AbstractController
         }
     }
     /**
-     * @Route("/{id}",  methods={"PUT"})
+     * @Route("/{id}",name="edit_comment",  methods={"PUT"})
      */
     public function edit(Request $request, string $id, SchemaValidator $schemaValidator):JsonResponse
     {
@@ -171,7 +171,7 @@ class CommentController extends AbstractController
         }
     }
     /**
-     * @Route("/{postId}/{commentId}", name="get_replis", methods={"GET"})
+     * @Route("/{postId}/{commentId}", name="get_replies", methods={"GET"})
      */
     public function get_replies(CommentRepository $repo, Request $request, SerializerInterface $serializer, string $postId, string $commentId): JsonResponse
     {
