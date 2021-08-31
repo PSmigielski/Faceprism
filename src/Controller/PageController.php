@@ -124,7 +124,7 @@ class PageController extends AbstractController
         }
     }
     /**
-     * @Route("/{pageId}",name="remove_page", methods={"POST"})
+     * @Route("/{pageId}",name="remove_page", methods={"DELETE"})
      */
     public function remove(Request $request, string $pageId): JsonResponse
     {
@@ -133,8 +133,9 @@ class PageController extends AbstractController
         $page = $em->getRepository(Page::class)->find(UUIDService::encodeUUID($pageId));
         if(!is_null($page)){
             if($page->getOwner()->getId() === UUIDService::encodeUUID($payload["user_id"])){
-
-                return new JsonResponse(["message"=>"Page has been deleted!"], 204);
+                $em->remove($page);
+                $em->flush();
+                return new JsonResponse(["message"=>"Page has been deleted!"], 202);
             }else{
                 return new JsonResponse(["error"=>"This page does not belongs to you"], 403);
             }
