@@ -15,17 +15,17 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 
 /**
- * @Route("/v1/api/profile", defaults={"_is_api": true})
+ * @Route("/v1/api/profile", defaults={"_is_api": true}, requirements={"id"="[0-9a-f]{32}"})
  */
 class ProfileController extends AbstractController
 {
     /**
-     * @Route("/{userID}", name="get_profile",methods={"GET"})
+     * @Route("/{id}", name="get_profile",methods={"GET"})
      */
-    public function show(string $userID) : JsonResponse
+    public function show(string $id) : JsonResponse
     {
         $em = $this->getDoctrine()->getManager();
-        $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($userID));
+        $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($id));
         if(is_null($user)){
             return new JsonResponse(["error"=>"user with this id does not exist!"], 404);
         }else{
@@ -35,7 +35,7 @@ class ProfileController extends AbstractController
         }
     }
     /**
-     * @Route("/image/{imageType}", name="change_image",methods={"POST"})
+     * @Route("/{imageType}", name="change_image",methods={"POST"})
      */
     public function updateProfilePic(Request $req, ImageUploader $imageUploader, string $imageType): JsonResponse
     {
@@ -47,28 +47,32 @@ class ProfileController extends AbstractController
         }else{
             $width = $imageType == "banner" ? 820 : 200;
             $height = $imageType == "banner" ? 312 : 200;
-            if(strpos($req->files->get("image")->getMimeType(), 'image') !== false){ 
-                switch($imageType){
-                    case "banner":
-                        $user->setBannerUrl($imageUploader->uploadFileToCloudinary($req->files->get("image"), $width , $height, $imageType));
-                        break;
-                    case "profile_pic":
-                        $user->setProfilePicUrl($imageUploader->uploadFileToCloudinary($req->files->get("image"), $width , $height, $imageType));
-                        break;
+            if(!is_null($req->files->get("image"))){
+                if(strpos($req->files->get("image")->getMimeType(), 'image') !== false){ 
+                    switch($imageType){
+                        case "banner":
+                            $user->setBannerUrl($imageUploader->uploadFileToCloudinary($req->files->get("image"), $width , $height, $imageType));
+                            break;
+                        case "profile_pic":
+                            $user->setProfilePicUrl($imageUploader->uploadFileToCloudinary($req->files->get("image"), $width , $height, $imageType));
+                            break;
+                    }
+                    $em->persist($user);
+                    $em->flush();
+                    switch($imageType){
+                        case "banner":
+                            return new JsonResponse(["message" => $imageType." has been updated","banner"=>$user->getBannerUrl()], 201);
+                            break;
+                        case "profile_pic":
+                            return new JsonResponse(["message" => $imageType." has been updated","profile_pic"=>$user->getProfilePicUrl()], 201);
+                            break;
+                    }
+                    
+                } else{
+                    return new JsonResponse(["error" => "Wrong file format"], 415);
                 }
-                $em->persist($user);
-                $em->flush();
-                switch($imageType){
-                    case "banner":
-                        return new JsonResponse(["message" => $imageType." has been updated","banner"=>$user->getBannerUrl()], 201);
-                        break;
-                    case "profile_pic":
-                        return new JsonResponse(["message" => $imageType." has been updated","profile_pic"=>$user->getProfilePicUrl()], 201);
-                        break;
-                }
-                
-            } else{
-                return new JsonResponse(["error" => "wrong file format"], 415);
+            } else {
+                return new JsonResponse(["error"=>"Image not found"], 404);
             }
         }
     }
