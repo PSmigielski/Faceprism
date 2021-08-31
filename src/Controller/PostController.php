@@ -20,7 +20,7 @@ use App\Service\UUIDService;
 use PaginationService;
 
 /**
- * @Route("/v1/api/posts", defaults={"_is_api": true})
+ * @Route("/v1/api/posts", defaults={"_is_api": true}, requirements={"id"="[0-9a-f]{32}"})
  * 
  */
 class PostController extends AbstractController
@@ -113,14 +113,14 @@ class PostController extends AbstractController
         return new JsonResponse($tmp, 201);
     }
     /**
-     * @Route("/{postID}", name="edit_comment", methods={"POST"})
+     * @Route("/{id}", name="edit_post", methods={"POST"})
      */
-    public function edit(Request $request, string $postID,ImageUploader $imageUploader):JsonResponse
+    public function edit(Request $request, string $id,ImageUploader $imageUploader):JsonResponse
     {
 
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
-        $post = $em->getRepository(Post::class)->find(UUIDService::encodeUUID($postID));
+        $post = $em->getRepository(Post::class)->find(UUIDService::encodeUUID($id));
         if(!$post){
             return new JsonResponse(["message"=>"Post does not exist"], 404);
         }
@@ -161,13 +161,13 @@ class PostController extends AbstractController
         }
     }
     /**
-     * @Route("/{postID}", name="delete_post", methods={"DELETE"})
+     * @Route("/{id}", name="delete_post", methods={"DELETE"})
      */
-    public function remove(Request $request, string $postID) :JsonResponse
+    public function remove(Request $request, string $id) :JsonResponse
     {
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
-        $post = $em->getRepository(Post::class)->find(UUIDService::encodeUUID($postID));
+        $post = $em->getRepository(Post::class)->find(UUIDService::encodeUUID($id));
         if(!$post){
             return new JsonResponse(["message"=>"Post does not exist"], 404);
         }
