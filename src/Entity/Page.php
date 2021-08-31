@@ -54,7 +54,7 @@ class Page
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class)
-     * @ORM\JoinColumn(name="pa_owner",referencedColumnName = "us_id",nullable=false)
+     * @ORM\JoinColumn(name="pa_owner",referencedColumnName = "us_id",nullable=false,onDelete="CASCADE")
      */
     private $pa_owner;
 
