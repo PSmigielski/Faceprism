@@ -8,7 +8,6 @@ use App\Repository\PageRepository;
 use App\Service\ImageUploader;
 use App\Service\SchemaValidator;
 use App\Service\UUIDService;
-use Opis\JsonSchema\MediaTypes\Json;
 use PaginationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -73,10 +72,11 @@ class PageController extends AbstractController
         }
     }
     /**
-     * @Route("",name="create_page", methods={"POST"})
+     * @Route("",name="create_or_edit_page", methods={"POST"})
      */
     public function create(Request $request, ImageUploader $imageUploader, SchemaValidator $schemaValidator) : JsonResponse 
     {
+        $pageID = $request->query->get("id", null);
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
         $name=$request->request->get("name", null);
@@ -85,10 +85,19 @@ class PageController extends AbstractController
         $website=$request->request->get("website", null);
         $profile_pic=$request->files->get("profile_pic", null);
         $banner=$request->files->get("banner", null);
+        $isEdited = false;
         if(is_null($name)){
             return new JsonResponse(["error" => "Page name is required"], 400);
         }else{
-            $page = new Page();
+            if(is_null($pageID)){
+                $page = new Page();
+            } else {
+                $isEdited = true;
+                $page = $em->getRepository(Page::class)->find(UUIDService::encodeUUID($pageID));
+                if(is_null($page)){
+                    return new JsonResponse(["erorr"=>"Page with this id does not exist"], 404);
+                }
+            }
             $page->setName($name);
             $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
             $page->setOwner($user);
@@ -120,6 +129,12 @@ class PageController extends AbstractController
             $tmp["owner"]=$tmpOwner;
             $tmp["id"] = UUIDService::decodeUUID($tmp["id"]);
             $tmp["owner"]["id"] = UUIDService::decodeUUID($tmp["owner"]["id"]);
+            if($isEdited){
+                $tmp1 = [];
+                $tmp1["page"] = $tmp;
+                $tmp1["message"] = "page has been edited successfully!";
+                return new JsonResponse($tmp1, 201);
+            }
             return new JsonResponse($tmp, 201);
         }
     }
