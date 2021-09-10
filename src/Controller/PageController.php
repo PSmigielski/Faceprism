@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Page;
+use App\Entity\PageModeration;
 use App\Entity\User;
 use App\Repository\PageRepository;
 use App\Service\ImageUploader;
@@ -18,10 +19,11 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 
 /**
- * @Route("/v1/api/pages", name="page", defaults={"_is_api": true})
+ * @Route("/v1/api/pages", name="page", defaults={"_is_api": true}, requirements={"pageId"="[0-9a-f]{32}"})
  */
 class PageController extends AbstractController
 {
+
     /**
      * @Route("", name="get_pages_for_user", methods={"GET"})
      */
@@ -89,6 +91,7 @@ class PageController extends AbstractController
         if(is_null($name)){
             return new JsonResponse(["error" => "Page name is required"], 400);
         }else{
+            $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
             if(is_null($pageID)){
                 $page = new Page();
             } else {
@@ -96,10 +99,13 @@ class PageController extends AbstractController
                 $page = $em->getRepository(Page::class)->find(UUIDService::encodeUUID($pageID));
                 if(is_null($page)){
                     return new JsonResponse(["erorr"=>"Page with this id does not exist"], 404);
+                }else{
+                    if($page->getOwner()->getId() !== $user->getId()){
+                        return new JsonResponse(["erorr"=>"This page does not belong to you"], 403);
+                    }
                 }
             }
             $page->setName($name);
-            $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
             $page->setOwner($user);
             if(!is_null($bio)){
                 if($schemaValidator->validateFormData($bio, "bio")===true){$page->setBio($bio);}else{return $schemaValidator->validateFormData($bio, "bio");}
@@ -121,6 +127,14 @@ class PageController extends AbstractController
             $page->setFollowCount(0);
             $em->persist($page);
             $em->flush();
+            if(!$isEdited){
+                $moderation = new PageModeration();
+                $moderation->setUserId($user);
+                $moderation->setPageId($page);
+                $moderation->setPageRole("OWNER");
+                $em->persist($moderation);
+                $em->flush();
+            }
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
             $ownerData = $serializer->serialize($page->getOwner(), "json",["ignored_attributes"=>['posts', "dateOfBirth", "password", "email", "username","roles","gender", "salt", "post","verified", "bio", "bannerUrl"]]);
             $data = $serializer->serialize($page, "json", ["ignored_attributes"=>["owner"]]);
