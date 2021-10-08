@@ -1,4 +1,4 @@
-# Untitled
+# /login
 
 {% api-method method="post" host="https://localhost:8000" path="/v1/api/auth/login" %}
 {% api-method-summary %}
@@ -17,7 +17,7 @@ user validated email
 {% endapi-method-parameter %}
 
 {% api-method-parameter name="password" type="string" required=true %}
-user pas
+user password
 {% endapi-method-parameter %}
 {% endapi-method-body-parameters %}
 {% endapi-method-request %}
