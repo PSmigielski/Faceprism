@@ -39,36 +39,36 @@ class PageModeration
         return $this->pm_id;
     }
 
-    public function getPmPageId(): ?Page
+    public function getPageId(): ?Page
     {
         return $this->pm_page_id;
     }
 
-    public function setPmPageId(?Page $pm_page_id): self
+    public function setPageId(?Page $pm_page_id): self
     {
         $this->pm_page_id = $pm_page_id;
 
         return $this;
     }
 
-    public function getPmUserId(): ?User
+    public function getUserId(): ?User
     {
         return $this->pm_user_id;
     }
 
-    public function setPmUserId(?User $pm_user_id): self
+    public function setUserId(?User $pm_user_id): self
     {
         $this->pm_user_id = $pm_user_id;
 
         return $this;
     }
 
-    public function getPmPageRole(): ?string
+    public function getPageRole(): ?string
     {
         return $this->pm_page_role;
     }
 
-    public function setPmPageRole(string $pm_page_role): self
+    public function setPageRole(string $pm_page_role): self
     {
         $this->pm_page_role = $pm_page_role;
 
