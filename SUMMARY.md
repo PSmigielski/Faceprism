@@ -1,4 +1,8 @@
 # Table of contents
 
-* [Initial page](README.md)
+* [Faceprism](README.md)
+
+## /v1/api/auth
+
+* [Untitled](v1-api-auth/untitled.md)
 
