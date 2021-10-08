@@ -4,5 +4,5 @@
 
 ## /v1/api/auth
 
-* [/login](v1-api-auth/untitled.md)
+* [/login](docs/v1-api-auth/untitled.md)
 
