@@ -132,23 +132,13 @@ class PageController extends AbstractController
                 return $schemaValidator->validateFormData($data);
             } else {
                 foreach ($data as $key => $value) {
-                    switch ($key) {
-                        case "email":
-                            $page->setEmail($email);
-                            break;
-                        case "banner":
-                            $page->setBannerUrl($imageUploader->uploadFileToCloudinary($profile_pic, 820, 312, "banner"));
-                            break;
-                        case "bio":
-                            $page->setBio($bio);
-                            break;
-                        case "profile_pic":
-                            $page->setProfilePicUrl($imageUploader->uploadFileToCloudinary($profile_pic, 200, 200, "profile_pic"));
-                            break;
-                        case "website":
-                            $page->setWebsite($website);
-                            break;
-                    }
+                    match ($key) {
+                        "email" => $page->setEmail($value),
+                        "banner" => $page->setBannerUrl($imageUploader->uploadFileToCloudinary($value, 820, 312, "banner")),
+                        "bio" => $page->setBio($value),
+                        "profile_pic" => $page->setProfilePicUrl($imageUploader->uploadFileToCloudinary($value, 200, 200, "profile_pic")),
+                        "website" => $page->setWebsite($value)
+                    };
                 }
             }
             $page->setFollowCount(0);
