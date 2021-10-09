@@ -23,7 +23,7 @@ class Page
     private $pa_name;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $pa_bio;
 
