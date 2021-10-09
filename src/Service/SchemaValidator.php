@@ -62,6 +62,24 @@ class SchemaValidator
                         return new JsonResponse(["error" => "bio is empty"], 400);
                     }
                     break;
+                case "text":
+                    if ($value == "") {
+                        return new JsonResponse(["error" => "text cannot be empty"], 400);
+                    }
+                    break;
+                case "file":
+                    if ($value->getError() == 1) {
+                        return new JsonResponse(["error" => "something went wrong with reading file! it might be corrupted"], 500);
+                    } else {
+                        if (strpos($value->getMimeType(), 'image') !== false || strpos($value->getMimeType(), 'video') !== false) {
+                            if ($value->getSize() > 1024 * 1024 * 10) {
+                                return new JsonResponse(["error" => "file is too big"], 400);
+                            }
+                        } else {
+                            return new JsonResponse(["error" => "wrong file type"], 400);
+                        }
+                    }
+                    break;
             }
         }
         return true;

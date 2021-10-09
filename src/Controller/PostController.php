@@ -17,6 +17,7 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 use App\Service\ImageUploader;
+use App\Service\SchemaValidator;
 use App\Service\UUIDService;
 use PaginationService;
 
@@ -95,7 +96,7 @@ class PostController extends AbstractController
     /**
      * @Route("", name="add_post", methods={"POST"})
      */
-    public function create(Request $request, ImageUploader $imageUploader): JsonResponse
+    public function create(Request $request, ImageUploader $imageUploader, SchemaValidator $schemaValidator): JsonResponse
     {
         $pageID = $request->query->get("p", null);
         $payload = $request->attributes->get("payload");
@@ -115,23 +116,27 @@ class PostController extends AbstractController
                 $post->setPage($page);
             }
         }
-        if ($request->request->get("text") != "" && !is_null($request->request->get("text"))) {
-            $post->setText($request->request->get("text"));
+        $text = $request->request->get("text", null);
+        $file = $request->files->get("file", null);
+        $data = [];
+        if (is_null($text) && is_null($file)) {
+            return new JsonResponse(["error" => "text or file is required!"], 400);
         } else {
-            return new JsonResponse(["error" => "text cannot be empty"], 400);
-        }
-        if (!is_null($request->files->get("file"))) {
-            if ($request->files->get("file")->getError() == 1) {
-                return new JsonResponse(["error" => "something went wrong with reading file! it might be corrupted"], 500);
+            if (!is_null($text)) {
+                $data["text"] = $text;
+            }
+            if (!is_null($file)) {
+                $data["file"] = $file;
+            }
+            $result = $schemaValidator->validateFormData($data);
+            if ($result !== true) {
+                return $result;
             } else {
-                if (strpos($request->files->get("file")->getMimeType(), 'image') !== false || strpos($request->files->get("file")->getMimeType(), 'video') !== false) {
-                    if ($request->files->get("file")->getSize() < 20480000) {
-                        $post->setFileUrl($imageUploader->uploadFileToCloudinary($request->files->get("file")));
-                    } else {
-                        return new JsonResponse(["error" => "file is too big"], 400);
-                    }
-                } else {
-                    return new JsonResponse(["error" => "wrong file type"], 400);
+                foreach ($data as $key => $value) {
+                    match ($key) {
+                        "text" => $post->setText($value),
+                        "file" => $post->setFileUrl($imageUploader->uploadFileToCloudinary($value))
+                    };
                 }
             }
         }
@@ -143,13 +148,13 @@ class PostController extends AbstractController
         $em = $this->getDoctrine()->getManager();
         $em->persist($post);
         $em->flush();
-        $resData = $serializer->serialize($post, "json", ['ignored_attributes' => ['posts', "transitions", "password", "salt", "dateOfBirth", "roles", "email", "username", "gender", "post", "verified", "bannerUrl", "bio", "timezone"]]);
+        $resData = $serializer->serialize($post, "json", ['ignored_attributes' => ['posts', "transitions", "timezone", "password", "email", "username", "roles", "gender", "salt", "post", "website", "bannerUrl", "bio", "verified", "dateOfBirth", "poComments"]]);
         $tmp = json_decode($resData, true);
         $tmp["id"] = UUIDService::decodeUUID($tmp["id"]);
         $tmp["author"]["id"] = UUIDService::decodeUUID($tmp["author"]["id"]);
         if (!is_null($tmp["page"])) {
             $tmp["page"]["id"] = UUIDService::decodeUUID($tmp["page"]["id"]);
-            $tmp["page"]["owner"]["id"] = UUIDService::decodeUUID($tmp["page"]["owner"]["id"]);
+            unset($tmp["page"]["owner"]);
         }
         return new JsonResponse($tmp, 201);
     }
