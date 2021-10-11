@@ -37,13 +37,11 @@ class PageController extends AbstractController
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
             $tmpPages = [];
             foreach ($data["pages"] as $value) {
-                $resData = $serializer->serialize($value, "json", ['ignored_attributes' => ["owner"]]);
-                $resDataUser = $serializer->serialize($value->getOwner(), "json", ['ignored_attributes' => ['posts', "dateOfBirth", "password", "email", "username", "roles", "gender", "salt", "post", "verified", "bio", "bannerUrl"]]);
-                $tmpuser = json_decode($resDataUser, true);
+                $res = $this->getDoctrine()->getRepository(PageModeration::class)->findBy(["pm_user" => UUIDService::encodeUUID($payload["user_id"]), "pm_page" => $value->getId()]);
+                $resData = $serializer->serialize($value, "json", ['ignored_attributes' => ["owner"]]);;
                 $tmp = json_decode($resData, true);
-                $tmpuser["id"] = UUIDService::decodeUUID($tmpuser["id"]);
                 $tmp["id"] = UUIDService::decodeUUID($tmp["id"]);
-                $tmp["owner"] = $tmpuser;
+                $tmp["role"] = $res[0]->getPageRole();
                 array_push($tmpPages, $tmp);
             }
             $data["pages"] = $tmpPages;
@@ -64,12 +62,8 @@ class PageController extends AbstractController
         } else {
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
             $resData = $serializer->serialize($page, "json", ['ignored_attributes' => ["owner"]]);
-            $resDataUser = $serializer->serialize($page->getOwner(), "json", ['ignored_attributes' => ['posts', "dateOfBirth", "password", "email", "username", "roles", "gender", "salt", "post", "verified", "bio", "bannerUrl"]]);
-            $tmpuser = json_decode($resDataUser, true);
             $tmp = json_decode($resData, true);
-            $tmpuser["id"] = UUIDService::decodeUUID($tmpuser["id"]);
             $tmp["id"] = UUIDService::decodeUUID($tmp["id"]);
-            $tmp["owner"] = $tmpuser;
             return new JsonResponse($tmp, 200);
         }
     }
