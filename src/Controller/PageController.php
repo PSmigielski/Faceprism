@@ -78,7 +78,7 @@ class PageController extends AbstractController
      */
     public function create(Request $request, ImageUploader $imageUploader, SchemaValidator $schemaValidator): JsonResponse
     {
-        $pageID = $request->query->get("id", null);
+        $pageID = $request->query->get("p", null);
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
         $name = $request->request->get("name", null);
@@ -89,85 +89,92 @@ class PageController extends AbstractController
         $banner = $request->files->get("banner", null);
         $data = [];
         $isEdited = false;
-        if (is_null($name)) {
-            return new JsonResponse(["error" => "Page name is required"], 400);
+
+
+        $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
+        if (is_null($pageID)) {
+            $page = new Page();
         } else {
-            $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
-            if (is_null($pageID)) {
-                $page = new Page();
+            $isEdited = true;
+            $page = $em->getRepository(Page::class)->find(UUIDService::encodeUUID($pageID));
+            if (is_null($page)) {
+                return new JsonResponse(["erorr" => "Page with this id does not exist"], 404);
             } else {
-                $isEdited = true;
-                $page = $em->getRepository(Page::class)->find(UUIDService::encodeUUID($pageID));
-                if (is_null($page)) {
-                    return new JsonResponse(["erorr" => "Page with this id does not exist"], 404);
-                } else {
-                    if ($page->getOwner()->getId() !== $user->getId()) {
-                        return new JsonResponse(["erorr" => "This page does not belong to you"], 403);
+                $pageModeration = $this->getDoctrine()->getRepository(PageModeration::class)->findBy(["pm_page" => UUIDService::encodeUUID($pageID)]);
+                $flag = false;
+                foreach ($pageModeration as $value) {
+                    if ($value->getUser()->getId() == UUIDService::encodeUUID($payload["user_id"]) && $value->getPageRole() == "OWNER") {
+                        $flag = true;
                     }
                 }
-            }
-            $page->setName($name);
-            $page->setOwner($user);
-            if (!is_null($bio)) {
-                $data["bio"] = $bio;
-            }
-            if (!is_null($email)) {
-                $data["email"] = $email;
-            }
-            if (!is_null($website)) {
-                $data["website"] = $website;
-            }
-            if (!is_null($profile_pic)) {
-                $data["profile_pic"] = $profile_pic;
-            } else {
-                $page->setProfilePicUrl("https://res.cloudinary.com/faceprism/image/upload/v1626432519/profile_pics/default_bbdyw0.png");
-            }
-            if (!is_null($bio)) {
-                $data["bio"] = $bio;
-            }
-            if (!is_null($banner)) {
-                $data["banner"] = $banner;
-            }
-            if ($schemaValidator->validateFormData($data) !== true) {
-                return $schemaValidator->validateFormData($data);
-            } else {
-                foreach ($data as $key => $value) {
-                    match ($key) {
-                        "email" => $page->setEmail($value),
-                        "banner" => $page->setBannerUrl($imageUploader->uploadFileToCloudinary($value, 820, 312, "banner")),
-                        "bio" => $page->setBio($value),
-                        "profile_pic" => $page->setProfilePicUrl($imageUploader->uploadFileToCloudinary($value, 200, 200, "profile_pic")),
-                        "website" => $page->setWebsite($value)
-                    };
+                if (!$flag) {
+                    return new JsonResponse(["error" => "You can't edit data of this page!"], 403);
                 }
             }
-            $page->setFollowCount(0);
-            $em->persist($page);
-            $em->flush();
-            if (!$isEdited) {
-                $moderation = new PageModeration();
-                $moderation->setUserId($user);
-                $moderation->setPageId($page);
-                $moderation->setPageRole("OWNER");
-                $em->persist($moderation);
-                $em->flush();
-            }
-            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $ownerData = $serializer->serialize($page->getOwner(), "json", ["ignored_attributes" => ['posts', "dateOfBirth", "password", "email", "username", "roles", "gender", "salt", "post", "verified", "bio", "bannerUrl"]]);
-            $data = $serializer->serialize($page, "json", ["ignored_attributes" => ["owner"]]);
-            $tmpOwner = json_decode($ownerData, true);
-            $tmp = json_decode($data, true);
-            $tmp["owner"] = $tmpOwner;
-            $tmp["id"] = UUIDService::decodeUUID($tmp["id"]);
-            $tmp["owner"]["id"] = UUIDService::decodeUUID($tmp["owner"]["id"]);
-            if ($isEdited) {
-                $tmp1 = [];
-                $tmp1["page"] = $tmp;
-                $tmp1["message"] = "page has been edited successfully!";
-                return new JsonResponse($tmp1, 201);
-            }
-            return new JsonResponse($tmp, 201);
         }
+        if (is_null($name) && $isEdited !== true) {
+            return new JsonResponse(["error" => "Page name is required"], 400);
+        }
+        if ($isEdited) {
+            $page->setName($page->getName());
+        } else {
+            $page->setName($name);
+        }
+        if (!is_null($bio)) {
+            $data["bio"] = $bio;
+        }
+        if (!is_null($email)) {
+            $data["email"] = $email;
+        }
+        if (!is_null($website)) {
+            $data["website"] = $website;
+        }
+        if (!is_null($profile_pic)) {
+            $data["profile_pic"] = $profile_pic;
+        } else {
+            $page->setProfilePicUrl("https://res.cloudinary.com/faceprism/image/upload/v1626432519/profile_pics/default_bbdyw0.png");
+        }
+        if (!is_null($bio)) {
+            $data["bio"] = $bio;
+        }
+        if (!is_null($banner)) {
+            $data["banner"] = $banner;
+        }
+        if ($schemaValidator->validateFormData($data) !== true) {
+            return $schemaValidator->validateFormData($data);
+        } else {
+            foreach ($data as $key => $value) {
+                match ($key) {
+                    "email" => $page->setEmail($value),
+                    "banner" => $page->setBannerUrl($imageUploader->uploadFileToCloudinary($value, 820, 312, "banner")),
+                    "bio" => $page->setBio($value),
+                    "profile_pic" => $page->setProfilePicUrl($imageUploader->uploadFileToCloudinary($value, 200, 200, "profile_pic")),
+                    "website" => $page->setWebsite($value)
+                };
+            }
+        }
+        $page->setFollowCount(0);
+        $em->persist($page);
+        $em->flush();
+        if (!$isEdited) {
+            $moderation = new PageModeration();
+            $moderation->setUser($user);
+            $moderation->setPage($page);
+            $moderation->setPageRole("OWNER");
+            $em->persist($moderation);
+            $em->flush();
+        }
+        $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+        $data = $serializer->serialize($page, "json", ["ignored_attributes" => ["owner"]]);
+        $tmp = json_decode($data, true);
+        $tmp["id"] = UUIDService::decodeUUID($tmp["id"]);
+        if ($isEdited) {
+            $tmp1 = [];
+            $tmp1["page"] = $tmp;
+            $tmp1["message"] = "page has been edited successfully!";
+            return new JsonResponse($tmp1, 201);
+        }
+        return new JsonResponse($tmp, 201);
     }
     /**
      * @Route("/{pageId}",name="remove_page", methods={"DELETE"})
