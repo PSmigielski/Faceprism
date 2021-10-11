@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Like;
 use App\Entity\Page;
+use App\Entity\PageModeration;
 use App\Entity\Post;
 use App\Entity\User;
 use App\Repository\PostRepository;
@@ -110,8 +111,15 @@ class PostController extends AbstractController
             if (!$page) {
                 return new JsonResponse(["error" => "page with this id does not exist!"], 404);
             } else {
-                if ($page->getOwner()->getId() != UUIDService::encodeUUID($payload["user_id"])) {
-                    return new JsonResponse(["error" => "this page does not belong to you!"], 403);
+                $pageModeration = $this->getDoctrine()->getRepository(PageModeration::class)->findBy(["pm_page" => UUIDService::encodeUUID($pageID)]);
+                $flag = false;
+                foreach ($pageModeration as $value) {
+                    if ($value->getUser()->getId() == UUIDService::encodeUUID($payload["user_id"])) {
+                        $flag = true;
+                    }
+                }
+                if (!$flag) {
+                    return new JsonResponse(["error" => "You can't add content to this page!"], 403);
                 }
                 $post->setPage($page);
             }
@@ -161,50 +169,66 @@ class PostController extends AbstractController
     /**
      * @Route("/{id}", name="edit_post", methods={"POST"})
      */
-    public function edit(Request $request, string $id, ImageUploader $imageUploader): JsonResponse
+    public function edit(Request $request, string $id, ImageUploader $imageUploader, SchemaValidator $schemaValidator): JsonResponse
     {
-
+        //TODO: add check for page moderation to all page endpoints
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
         $post = $em->getRepository(Post::class)->find(UUIDService::encodeUUID($id));
         if (!$post) {
             return new JsonResponse(["error" => "Post does not exist"], 404);
         }
-        if ($post->getAuthor()->getId() == UUIDService::encodeUUID($payload['user_id'])) {
-            if ($request->request->get("text") != "" && !is_null($request->request->get("text"))) {
-                $post->setText($request->request->get("text"));
-            } else {
-                return new JsonResponse(["error" => "text cannot be empty"], 400);
-            }
-            if (!is_null($request->files->get("file"))) {
-                if ($request->files->get("file")->getError() == 1) {
-                    return new JsonResponse(["error" => "something went wrong with reading file! it might be corrupted"], 500);
-                } else {
-                    if (strpos($request->files->get("file")->getMimeType(), 'image') !== false || strpos($request->files->get("file")->getMimeType(), 'video') !== false) {
-                        if ($request->files->get("file")->getSize() < 204800) {
-                            $post->setFileUrl($imageUploader->uploadFileToCloudinary($request->files->get("file")));
-                        } else {
-                            return new JsonResponse(["error" => "file is too big"], 400);
-                        }
-                    } else {
-                        return new JsonResponse(["error" => "wrong file type"], 400);
-                    }
+        if (!is_null($post->getPage())) {
+            $pageModeration = $this->getDoctrine()->getRepository(PageModeration::class)->findBy(["pm_page" => $post->getPage()->getId()]);
+            $flag = false;
+            foreach ($pageModeration as $value) {
+                if ($value->getUser()->getId() == UUIDService::encodeUUID($payload["user_id"])) {
+                    $flag = true;
                 }
-            } else {
-                $post->setFileUrl(null);
             }
-            $post->setEditedAt(new DateTime("now"));
-            $em->persist($post);
-            $em->flush();
-            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($post, "json", ['ignored_attributes' => ['posts', "transitions", "password", "salt", "dateOfBirth", "roles", "email", "username", "gender", "post", "verified", "bannerUrl", "bio", "timezone", "poComments"]]);
-            $tmp = json_decode($resData, true);
-            $tmp["id"] = UUIDService::decodeUUID($tmp["id"]);
-            $tmp["author"]["id"] = UUIDService::decodeUUID($tmp["author"]["id"]);
-            return new JsonResponse(["message" => "Post has been edited", "post" => $tmp], 200);
-        } else {
-            return new JsonResponse(["error" => "This post does not belong to you"], 403);
+            if (!$flag) {
+                return new JsonResponse(["error" => "You can't modify post from this page!"], 403);
+            }
         }
+        if (is_null($post->getPage()) && $post->getAuthor()->getId() != UUIDService::encodeUUID($payload['user_id'])) {
+            return new JsonResponse(["error" => "This post does not belong to you"], 402);
+        }
+        $text = $request->request->get("text", null);
+        $file = $request->files->get("file", null);
+        $data = [];
+        if (is_null($text) && is_null($file)) {
+            return new JsonResponse(["error" => "text or file is required!"], 400);
+        } else {
+            if (!is_null($text)) {
+                $data["text"] = $text;
+            }
+            if (!is_null($file)) {
+                $data["file"] = $file;
+            }
+            $result = $schemaValidator->validateFormData($data);
+            if ($result !== true) {
+                return $result;
+            } else {
+                foreach ($data as $key => $value) {
+                    match ($key) {
+                        "text" => $post->setText($value),
+                        "file" => $post->setFileUrl($imageUploader->uploadFileToCloudinary($value))
+                    };
+                }
+            }
+        }
+        $post->setEditedAt(new DateTime("now"));
+        $em->persist($post);
+        $em->flush();
+        $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+        $resData = $serializer->serialize($post, "json", ['ignored_attributes' => ['posts', "transitions", "password", "salt", "dateOfBirth", "roles", "email", "username", "gender", "post", "verified", "bannerUrl", "bio", "timezone", "poComments"]]);
+        $tmp = json_decode($resData, true);
+        $tmp["id"] = UUIDService::decodeUUID($tmp["id"]);
+        $tmp["author"]["id"] = UUIDService::decodeUUID($tmp["author"]["id"]);
+        if (!is_null($post->getPage())) {
+            $tmp["page"]["id"] = UUIDService::decodeUUID($tmp["page"]["id"]);
+        }
+        return new JsonResponse(["message" => "Post has been edited", "post" => $tmp], 200);
     }
     /**
      * @Route("/{id}", name="delete_post", methods={"DELETE"})
@@ -217,12 +241,23 @@ class PostController extends AbstractController
         if (!$post) {
             return new JsonResponse(["error" => "Post does not exist"], 404);
         }
-        if ($post->getAuthor()->getId() == UUIDService::encodeUUID($payload['user_id'])) {
-            $em->remove($post);
-            $em->flush();
-            return new JsonResponse(["message" => "Post has been deleted"], 200);
-        } else {
-            return new JsonResponse(["error" => "This post does not belong to you"], 403);
+        if (!is_null($post->getPage())) {
+            $pageModeration = $this->getDoctrine()->getRepository(PageModeration::class)->findBy(["pm_page" => $post->getPage()->getId()]);
+            $flag = false;
+            foreach ($pageModeration as $value) {
+                if ($value->getUser()->getId() == UUIDService::encodeUUID($payload["user_id"])) {
+                    $flag = true;
+                }
+            }
+            if (!$flag) {
+                return new JsonResponse(["error" => "You can't delete content from this page!"], 403);
+            }
         }
+        if (is_null($post->getPage()) && $post->getAuthor()->getId() != UUIDService::encodeUUID($payload['user_id'])) {
+            return new JsonResponse(["error" => "This post does not belong to you"], 402);
+        }
+        $em->remove($post);
+        $em->flush();
+        return new JsonResponse(["message" => "Post has been deleted"], 200);
     }
 }

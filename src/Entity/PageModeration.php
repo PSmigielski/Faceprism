@@ -19,15 +19,15 @@ class PageModeration
 
     /**
      * @ORM\ManyToOne(targetEntity=Page::class)
-     * @ORM\JoinColumn(name="pm_page_id",referencedColumnName = "pa_id",nullable=false, onDelete="CASCADE")
+     * @ORM\JoinColumn(name="pm_page",referencedColumnName = "pa_id",nullable=false, onDelete="CASCADE")
      */
-    private $pm_page_id;
+    private $pm_page;
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class)
-     * @ORM\JoinColumn(name="pa_owner",referencedColumnName = "us_id",nullable=false, onDelete="CASCADE")
+     * @ORM\JoinColumn(name="pm_user",referencedColumnName = "us_id",nullable=false, onDelete="CASCADE")
      */
-    private $pm_user_id;
+    private $pm_user;
 
     /**
      * @ORM\Column(type="string", length=50)
@@ -39,26 +39,26 @@ class PageModeration
         return $this->pm_id;
     }
 
-    public function getPageId(): ?Page
+    public function getPage(): ?Page
     {
-        return $this->pm_page_id;
+        return $this->pm_page;
     }
 
-    public function setPageId(?Page $pm_page_id): self
+    public function setPage(?Page $pm_page): self
     {
-        $this->pm_page_id = $pm_page_id;
+        $this->pm_page = $pm_page;
 
         return $this;
     }
 
-    public function getUserId(): ?User
+    public function getUser(): ?User
     {
-        return $this->pm_user_id;
+        return $this->pm_user;
     }
 
-    public function setUserId(?User $pm_user_id): self
+    public function setUser(?User $pm_user): self
     {
-        $this->pm_user_id = $pm_user_id;
+        $this->pm_user = $pm_user;
 
         return $this;
     }

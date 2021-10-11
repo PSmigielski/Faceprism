@@ -52,12 +52,6 @@ class Page
      */
     private $pa_website;
 
-    /**
-     * @ORM\ManyToOne(targetEntity=User::class)
-     * @ORM\JoinColumn(name="pa_owner",referencedColumnName = "us_id",nullable=false,onDelete="CASCADE")
-     */
-    private $pa_owner;
-
     public function getId(): ?string
     {
         return $this->pa_id;
@@ -143,18 +137,6 @@ class Page
     public function setWebsite(?string $pa_website): self
     {
         $this->pa_website = $pa_website;
-
-        return $this;
-    }
-
-    public function getOwner(): ?User
-    {
-        return $this->pa_owner;
-    }
-
-    public function setOwner(?User $pa_owner): self
-    {
-        $this->pa_owner = $pa_owner;
 
         return $this;
     }
