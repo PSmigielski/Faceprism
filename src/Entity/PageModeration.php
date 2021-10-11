@@ -12,7 +12,7 @@ class PageModeration
 {
     /**
      * @ORM\Id
-     * @ORM\Column(name="pa_id", type="guid")
+     * @ORM\Column(name="pm_id", type="guid")
      * @ORM\GeneratedValue(strategy="UUID")
      */
     private $pm_id;

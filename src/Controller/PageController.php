@@ -178,14 +178,20 @@ class PageController extends AbstractController
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
         $page = $em->getRepository(Page::class)->find(UUIDService::encodeUUID($pageId));
-        if (!is_null($page)) {
-            if ($page->getOwner()->getId() === UUIDService::encodeUUID($payload["user_id"])) {
-                $em->remove($page);
-                $em->flush();
-                return new JsonResponse(["message" => "Page has been deleted!"], 202);
-            } else {
-                return new JsonResponse(["error" => "This page does not belongs to you"], 403);
+        if ($page) {
+            $pageModeration = $this->getDoctrine()->getRepository(PageModeration::class)->findBy(["pm_page" => UUIDService::encodeUUID($pageId)]);
+            $flag = false;
+            foreach ($pageModeration as $value) {
+                if ($value->getUser()->getId() == UUIDService::encodeUUID($payload["user_id"]) && $value->getPageRole() == "OWNER") {
+                    $flag = true;
+                }
             }
+            if (!$flag) {
+                return new JsonResponse(["error" => "You can't delete this page!"], 403);
+            }
+            $em->remove($page);
+            $em->flush();
+            return new JsonResponse(["message" => "Page has been deleted"], 200);
         } else {
             return new JsonResponse(["error" => "Page with this id does not exist!"], 404);
         }
