@@ -12,10 +12,10 @@ class Follow
 {
     /**
      * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
+     * @ORM\Column(name="fo_id", type="guid")
+     * @ORM\GeneratedValue(strategy="UUID")
      */
-    private $id;
+    private $fo_id;
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class)
@@ -34,24 +34,24 @@ class Follow
         return $this->id;
     }
 
-    public function getFoUser(): ?User
+    public function getUser(): ?User
     {
         return $this->fo_user;
     }
 
-    public function setFoUser(?User $fo_user): self
+    public function setUser(?User $fo_user): self
     {
         $this->fo_user = $fo_user;
 
         return $this;
     }
 
-    public function getFoPage(): ?Page
+    public function getPage(): ?Page
     {
         return $this->fo_page;
     }
 
-    public function setFoPage(?Page $fo_page): self
+    public function setPage(?Page $fo_page): self
     {
         $this->fo_page = $fo_page;
 
