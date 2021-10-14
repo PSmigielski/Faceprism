@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\PageModeration;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -17,6 +18,10 @@ class PageModerationRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, PageModeration::class);
+    }
+    public function getAllAdministrationQuery(string $pageId): QueryBuilder
+    {
+        return $this->createQueryBuilder("pm")->where("pm.pm_page = :id")->setParameter("id", $pageId);
     }
 
     // /**
