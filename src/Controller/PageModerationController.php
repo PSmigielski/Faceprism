@@ -7,7 +7,6 @@ use App\Entity\PageModeration;
 use App\Entity\User;
 use App\Repository\PageModerationRepository;
 use App\Service\UUIDService;
-use Opis\JsonSchema\MediaTypes\Json;
 use PaginationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -120,5 +119,39 @@ class PageModerationController extends AbstractController
         $em->flush();
         $tag = $user->getTag();
         return new JsonResponse(["message" => "$role has been given to $tag"]);
+    }
+    /**
+     * @Route("/{pageId}",name="remove_moderator", methods={"DELETE"})
+     */
+    public function remove(string $pageId, Request $request): JsonResponse
+    {
+        $em = $this->getDoctrine()->getManager();
+        $payload = $request->attributes->get("payload");
+        $userId = $request->query->get("u", null);
+        if (is_null($userId)) {
+            return new JsonResponse(["error" => "no user id provided"], 400);
+        }
+        $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($userId));
+        if (is_null($user)) {
+            return new JsonResponse(["error" => "user with this id does not exist"], 404);
+        }
+        $page = $em->getRepository(Page::class)->find(UUIDService::encodeUUID($pageId));
+        if (is_null($page)) {
+            return new JsonResponse(["error" => "page with this id does not exist"], 404);
+        }
+        $permissions = $em->getRepository(PageModeration::class)->findOneBy(["pm_user" => UUIDService::encodeUUID($payload["user_id"]), "pm_page" => UUIDService::encodeUUID($pageId)]);
+        if ($permissions->getPageRole() != $this->PAGE_ROLES[0]) {
+            return new JsonResponse(["error" => "you don't have permission to remove users from page moderation"], 403);
+        }
+        if ($userId == $payload["user_id"]) {
+            return new JsonResponse(["error" => "you can't remove yourself"], 400);
+        }
+        $moderator = $em->getRepository(PageModeration::class)->findOneBy(["pm_user" => UUIDService::encodeUUID($userId), "pm_page" => UUIDService::encodeUUID($pageId)]);
+        if (is_null($moderator)) {
+            return new JsonResponse(["error" => "this user is not in page moderation!"], 404);
+        }
+        $em->remove($moderator);
+        $em->flush();
+        return new JsonResponse(["message" => "user has been deleted from page moderation"], 202);
     }
 }
