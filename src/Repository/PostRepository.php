@@ -22,7 +22,7 @@ class PostRepository extends ServiceEntityRepository
     }
     public function createFindAllQuery(string $userID): QueryBuilder
     {
-        return $this->createQueryBuilder("p")->leftJoin("App\Entity\Friend", "f", Join::WITH, "f.fr_friend=p.po_author")->where("f.fr_user = :id")->orderBy('p.po_created_at', "DESC")->setParameter("id", $userID);
+        return $this->createQueryBuilder("p")->leftJoin("App\Entity\Friend", "f", Join::WITH, "f.fr_friend=p.po_author")->where("f.fr_user = :id")->leftJoin("App\Entity\Follow", "fo", Join::WITH, "p.po_page = fo.fo_page")->where("f.fr_user = :id")->andWhere("p.po_page IS NULL")->orWhere("fo.fo_user = :id")->orderBy('p.po_created_at', "DESC")->setParameter("id", $userID);
     }
     public function createFindAllPostsForUser(string $userID): QueryBuilder
     {

@@ -171,7 +171,6 @@ class PostController extends AbstractController
      */
     public function edit(Request $request, string $id, ImageUploader $imageUploader, SchemaValidator $schemaValidator): JsonResponse
     {
-        //TODO: add check for page moderation to all page endpoints
         $payload = $request->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
         $post = $em->getRepository(Post::class)->find(UUIDService::encodeUUID($id));
