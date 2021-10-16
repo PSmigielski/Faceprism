@@ -20,6 +20,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 use App\Service\ImageUploader;
 use App\Service\SchemaValidator;
 use App\Service\UUIDService;
+use Opis\JsonSchema\MediaTypes\Json;
 use PaginationService;
 
 /**
@@ -135,6 +136,12 @@ class PostController extends AbstractController
             }
             if (!is_null($file)) {
                 $data["file"] = $file;
+                if (strpos($file->getMimeType(), "image") !== false) {
+                    $data["fileType"] = "image";
+                }
+                if (strpos($file->getMimeType(), "video") !== false) {
+                    $data["fileType"] = "video";
+                }
             }
             $result = $schemaValidator->validateFormData($data);
             if ($result !== true) {
@@ -143,7 +150,8 @@ class PostController extends AbstractController
                 foreach ($data as $key => $value) {
                     match ($key) {
                         "text" => $post->setText($value),
-                        "file" => $post->setFileUrl($imageUploader->uploadFileToCloudinary($value))
+                        "file" => $post->setFileUrl($imageUploader->uploadFileToCloudinary($value)),
+                        "fileType" => $post->setFileType($value)
                     };
                 }
             }
@@ -203,6 +211,12 @@ class PostController extends AbstractController
             }
             if (!is_null($file)) {
                 $data["file"] = $file;
+                if (strpos($file->getMimeType(), "image") !== false) {
+                    $data["fileType"] = "image";
+                }
+                if (strpos($file->getMimeType(), "video") !== false) {
+                    $data["fileType"] = "video";
+                }
             }
             $result = $schemaValidator->validateFormData($data);
             if ($result !== true) {
@@ -211,7 +225,8 @@ class PostController extends AbstractController
                 foreach ($data as $key => $value) {
                     match ($key) {
                         "text" => $post->setText($value),
-                        "file" => $post->setFileUrl($imageUploader->uploadFileToCloudinary($value))
+                        "file" => $post->setFileUrl($imageUploader->uploadFileToCloudinary($value)),
+                        "fileType" => $post->setFileType($value)
                     };
                 }
             }

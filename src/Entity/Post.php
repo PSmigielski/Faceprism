@@ -66,6 +66,11 @@ class Post
      */
     private $po_page;
 
+    /**
+     * @ORM\Column(type="string", length=10, nullable=true)
+     */
+    private $po_file_type;
+
     public function __construct()
     {
         $this->po_comments = new ArrayCollection();
@@ -197,6 +202,18 @@ class Post
     public function setPage(?Page $po_page): self
     {
         $this->po_page = $po_page;
+
+        return $this;
+    }
+
+    public function getFileType(): ?string
+    {
+        return $this->po_file_type;
+    }
+
+    public function setFileType(string $po_file_type): self
+    {
+        $this->po_file_type = $po_file_type;
 
         return $this;
     }
