@@ -60,6 +60,17 @@ class Post
      */
     private $po_comment_count;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=Page::class)
+     * @ORM\JoinColumn(name="po_page",referencedColumnName = "pa_id", nullable=true, onDelete="CASCADE")
+     */
+    private $po_page;
+
+    /**
+     * @ORM\Column(type="string", length=10, nullable=true)
+     */
+    private $po_file_type;
+
     public function __construct()
     {
         $this->po_comments = new ArrayCollection();
@@ -179,6 +190,30 @@ class Post
     public function setCommentCount(int $po_comment_count): self
     {
         $this->po_comment_count = $po_comment_count;
+
+        return $this;
+    }
+
+    public function getPage(): ?Page
+    {
+        return $this->po_page;
+    }
+
+    public function setPage(?Page $po_page): self
+    {
+        $this->po_page = $po_page;
+
+        return $this;
+    }
+
+    public function getFileType(): ?string
+    {
+        return $this->po_file_type;
+    }
+
+    public function setFileType(string $po_file_type): self
+    {
+        $this->po_file_type = $po_file_type;
 
         return $this;
     }

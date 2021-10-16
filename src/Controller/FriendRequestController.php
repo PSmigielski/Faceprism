@@ -8,10 +8,7 @@ use App\Entity\User;
 use App\Repository\FriendRequestRepository;
 use App\Service\UUIDService;
 use DateTime;
-use Pagerfanta\Doctrine\ORM\QueryAdapter;
-use Pagerfanta\Exception\OutOfRangeCurrentPageException;
-use Pagerfanta\Pagerfanta;
-use ProxyManager\Factory\RemoteObject\Adapter\JsonRpc;
+use PaginationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,49 +23,35 @@ use Symfony\Component\Serializer\Serializer;
 class FriendRequestController extends AbstractController
 {
     /**
-     * @Route("", methods={"GET"})
+     * @Route("",name="get_friend_requests", methods={"GET"})
      */
-    public function index(FriendRequestRepository $repo, Request $request, UUIDService $UUIDService): JsonResponse
+    public function index(FriendRequestRepository $repo, Request $request): JsonResponse
     {
-        try{
-            $payload = $request->attributes->get("payload");
-            $page = $request->query->get('page', 1);
-            $qb = $repo->createGetAllFriendRequests($UUIDService->encodeUUID($payload["user_id"]));
-            $adapter = new QueryAdapter($qb);
-            $pagerfanta = new Pagerfanta($adapter);
-            $pagerfanta->setMaxPerPage(25);
-            $pagerfanta->setCurrentPage($page);
-            $requests = array();
-            foreach($pagerfanta->getCurrentPageResults() as $req){
-                $requests[] = $req;
-            } 
-            $data = [
-                "page"=> $page,
-                "totalPages" => $pagerfanta->getNbPages(),
-                "count" => $pagerfanta->getNbResults(),
-                "requests"=> $requests
-            ];
+        $payload = $request->attributes->get("payload");
+        $page = $request->query->get('page', 1);
+        $qb = $repo->createGetAllFriendRequests(UUIDService::encodeUUID($payload["user_id"]));
+        $data = PaginationService::paginate($page,$qb,"requests");
+        if(gettype($data)=="array"){
             $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
             $resData = $serializer->serialize($data, "json",['ignored_attributes' => ['posts', "transitions", "timezone", "password", "email", "username","roles","gender", "salt", "post"]]);
             $tmp = json_decode($resData, true);
             $tmpRequests = [];
             foreach($tmp["requests"] as $r){
-                $r["id"] = $UUIDService->decodeUUID($r["id"]);
-                $r["user"]["id"] = $UUIDService->decodeUUID($r["user"]["id"]);
-                $r["friend"]["id"] = $UUIDService->decodeUUID($r["friend"]["id"]);
+                $r["id"] = UUIDService::decodeUUID($r["id"]);
+                $r["user"]["id"] = UUIDService::decodeUUID($r["user"]["id"]);
+                $r["friend"]["id"] = UUIDService::decodeUUID($r["friend"]["id"]);
                 array_push($tmpRequests, $r);
             }
             $tmp["requests"] = $tmpRequests;
             return new JsonResponse($tmp, 200);
-        }
-        catch(OutOfRangeCurrentPageException $e){
-            return new JsonResponse(["message"=>"Page not found"], 404);
+        } else {
+            return $data;
         }
     }
     /**
-     * @Route("/{friendID}", methods={"POST"})
+     * @Route("/{friendID}",name="add_friend_request", methods={"POST"})
      */
-    public function add(Request $req, string $friendID, UUIDService $UUIDService):JsonResponse
+    public function add(Request $req, string $friendID):JsonResponse
     {
         $payload = $req->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
@@ -76,8 +59,8 @@ class FriendRequestController extends AbstractController
         if($payload["user_id"]===$friendID){
             return new JsonResponse(["error" => "You can't request yourself!"],400);
         }
-        $user = $em->getRepository(User::class)->find($UUIDService->encodeUUID($payload["user_id"]));
-        $friend = $em->getRepository(User::class)->find($UUIDService->encodeUUID($friendID));
+        $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
+        $friend = $em->getRepository(User::class)->find(UUIDService::encodeUUID($friendID));
         if(!$user || !$friend){
             return new JsonResponse(["error" => "User with this id does not exist!"], 404);
         }
@@ -105,15 +88,15 @@ class FriendRequestController extends AbstractController
         }
     }
     /**
-     * @Route("/accept/{requestID}", methods={"POST"})
+     * @Route("/accept/{requestID}",name="accept_friend_request" , methods={"POST"})
      */
-    public function accept(Request $req, string $requestID, UUIDService $UUIDService) :JsonResponse
+    public function accept(Request $req, string $requestID) :JsonResponse
     { 
         $payload = $req->attributes->get("payload");
         $em = $this->getDoctrine()->getManager();
-        $fr_req = $em->getRepository(FriendRequest::class)->find($UUIDService->encodeUUID($requestID));
+        $fr_req = $em->getRepository(FriendRequest::class)->find(UUIDService::encodeUUID($requestID));
         if($fr_req){
-            if($payload["user_id"] == $UUIDService->decodeUUID($fr_req->getFriend()->getId())){
+            if($payload["user_id"] == UUIDService::decodeUUID($fr_req->getFriend()->getId())){
                 $friend1 = new Friend();
                 $friend1->setFriend($fr_req->getFriend());
                 $friend1->setUser($fr_req->getUser());
@@ -137,12 +120,12 @@ class FriendRequestController extends AbstractController
         }
     }
     /**
-     * @Route("/reject/{requestID}", methods={"DELETE"})
+     * @Route("/reject/{requestID}",name="reject_friend_request" , methods={"DELETE"})
      */
-    public function reject(string $requestID, UUIDService $UUIDService) :JsonResponse
+    public function reject(string $requestID) :JsonResponse
     {
         $em = $this->getDoctrine()->getManager();
-        $fr_req = $em->getRepository(FriendRequest::class)->find($UUIDService->encodeUUID($requestID));
+        $fr_req = $em->getRepository(FriendRequest::class)->find(UUIDService::encodeUUID($requestID));
         if($fr_req){
             $em->remove($fr_req);
             $em->flush();

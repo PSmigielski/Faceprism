@@ -46,12 +46,12 @@ class VerifyEmailController extends AbstractController
         }
     }
     /**
-     * @Route("/v1/api/verify/{verifyId}",name="verify_email", methods={"POST"}, defaults={"_is_api": true})
+     * @Route("/v1/api/verify/{id}",name="verify_email", methods={"POST"}, defaults={"_is_api": true}, requirements={"id"="[0-9a-f]{32}"})
      */
-    public function verify(string $verifyId,UUIDService $UUIDService) : JsonResponse
+    public function verify(string $id) : JsonResponse
     {
         $em = $this->getDoctrine()->getManager();
-        $verRequest=$em->getRepository(VerifyEmailRequest::class)->find($UUIDService->encodeUUID($verifyId));
+        $verRequest=$em->getRepository(VerifyEmailRequest::class)->find(UUIDService::encodeUUID($id));
         if(is_null($verRequest)){
             return new JsonResponse(["error" => "Verify Request with this id does not exist!"],404);
         }else{

@@ -49,4 +49,3 @@
             return $imageUploaded['secure_url'];
         }
     }
-?>
