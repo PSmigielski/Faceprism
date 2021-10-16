@@ -97,9 +97,9 @@ class PostController extends AbstractController
         return new JsonResponse($tmp, 200);
     }
     /**
-     * @Route("", name="add_post", methods={"POST"})
+     * @Route("", name="add_or_edit_post", methods={"POST"})
      */
-    public function create(Request $request, ImageUploader $imageUploader, SchemaValidator $schemaValidator): JsonResponse
+    public function create_or_edit(Request $request, ImageUploader $imageUploader, SchemaValidator $schemaValidator): JsonResponse
     {
         $em = $this->getDoctrine()->getManager();
         $pageID = $request->query->get("p", null);
@@ -129,10 +129,9 @@ class PostController extends AbstractController
             if (is_null($post->getPage()) && $post->getAuthor()->getId() != UUIDService::encodeUUID($payload['user_id'])) {
                 return new JsonResponse(["error" => "This post does not belong to you"], 402);
             }
+            $post->setEditedAt(new DateTime("now"));
         } else {
             $post = new Post();
-        }
-        if (!$isEdited) {
             $author = $em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
             if (!$author) {
                 return new JsonResponse(["error" => "user with this id does not exist!"], 404);
@@ -155,6 +154,10 @@ class PostController extends AbstractController
                     $post->setPage($page);
                 }
             }
+            $post->setAuthor($author);
+            $post->setCreatedAt(new DateTime("now"));
+            $post->setLikeCount(0);
+            $post->setCommentCount(0);
         }
         $text = $request->request->get("text", null);
         $file = $request->files->get("file", null);
@@ -186,14 +189,6 @@ class PostController extends AbstractController
                     };
                 }
             }
-        }
-        if (!$isEdited) {
-            $post->setAuthor($author);
-            $post->setCreatedAt(new DateTime("now"));
-            $post->setLikeCount(0);
-            $post->setCommentCount(0);
-        } else {
-            $post->setEditedAt(new DateTime("now"));
         }
         $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
         $em->persist($post);
