@@ -3,6 +3,9 @@
 namespace App\Tests\Controller;
 
 use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase;
+use Symfony\Component\HttpClient\Exception\ClientException;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 class AuthControllerTest extends ApiTestCase
 {
@@ -25,5 +28,31 @@ class AuthControllerTest extends ApiTestCase
         $this->assertArrayHasKey("roles", $data);
         $this->assertArrayHasKey("profile_pic", $data);
         $this->assertArrayHasKey("email", $data);
+    }
+    public function testCantLoginWithWrongCredentials(): void
+    {
+        $client = self::createClient();
+        $data = [
+            "email" => "adsasda@gmail.com",
+            "password" => "StrasdongPassword"
+        ];;
+        $client->request("POST", "http://localhost:8000/v1/api/auth/login", [
+            'headers' => ['Content-Type' => 'application/json'],
+            'json' => $data,
+        ]);
+        $this->assertEquals(401, $client->getResponse()->getStatusCode());
+        $this->assertBrowserNotHasCookie("BEARER");
+        $this->assertBrowserNotHasCookie("REFRESH_TOKEN");
+        $data = json_decode($client->getResponse()->getContent(false), true);
+        $this->assertArrayHasKey("code", $data);
+        $this->assertArrayHasKey("message", $data);
+        $data = [];
+        $client->request("POST", "http://localhost:8000/v1/api/auth/login", [
+            'headers' => ['Content-Type' => 'application/json'],
+            'json' => $data,
+        ]);
+        $this->assertEquals(400, $client->getResponse()->getStatusCode());
+        $this->assertBrowserNotHasCookie("BEARER");
+        $this->assertBrowserNotHasCookie("REFRESH_TOKEN");
     }
 }
