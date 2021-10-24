@@ -7,6 +7,8 @@ use Opis\JsonSchema\{
     Validator,
     Schema
 };
+use PhpParser\Node\Stmt\Break_;
+use PhpParser\Node\Stmt\Return_;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -186,6 +188,9 @@ class SchemaValidator
                 break;
             case "minProperties":
                 return new JsonResponse(["error" => "given properties: " . $result->getFirstError()->keywordArgs()["count"] . "; minimum quantity of properties: " . $result->getFirstError()->keywordArgs()["min"]], 400);
+                break;
+            case "additionalProperties":
+                return new JsonResponse(["error" => "no additional properties allowed"], 400);
                 break;
         }
     }

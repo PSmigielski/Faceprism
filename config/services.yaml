@@ -8,40 +8,51 @@ parameters:
 services:
     # default configuration for services in *this* file
     _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
+        autowire: true # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
-        resource: '../src/'
+        resource: "../src/"
         exclude:
-            - '../src/DependencyInjection/'
-            - '../src/Entity/'
-            - '../src/Kernel.php'
-            - '../src/Tests/'
+            - "../src/DependencyInjection/"
+            - "../src/Entity/"
+            - "../src/Kernel.php"
+            - "../src/Tests/"
 
     # controllers are imported separately to make sure services can be injected
     # as action arguments even if you don't extend any base controller class
     App\Controller\:
-        resource: '../src/Controller/'
-        tags: ['controller.service_arguments']
+        resource: "../src/Controller/"
+        tags: ["controller.service_arguments"]
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
     acme_api.event.jwt_decoded_listener:
         class: App\EventListener\JWTDecodedListener
-        arguments: [ '@request_stack' ]
+        arguments: ["@request_stack"]
         tags:
-            - { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_decoded, method: onJWTDecoded }
+            - {
+                  name: kernel.event_listener,
+                  event: lexik_jwt_authentication.on_jwt_decoded,
+                  method: onJWTDecoded,
+              }
     acme_api.event.jwt_created_listener:
         class: App\EventListener\JWTCreatedListener
-        arguments: [ '@request_stack' ]
+        arguments: ["@request_stack"]
         tags:
-            - { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_created, method: onJWTCreated }
+            - {
+                  name: kernel.event_listener,
+                  event: lexik_jwt_authentication.on_jwt_created,
+                  method: onJWTCreated,
+              }
     App\EventSubscriber\RefreshedTokenSubscriber:
-        arguments: ['%gesdinet_jwt_refresh_token.ttl%', '%lexik_jwt_authentication.token_ttl%', '@doctrine.orm.entity_manager']
-    
+        arguments:
+            [
+                "%gesdinet_jwt_refresh_token.ttl%",
+                "%lexik_jwt_authentication.token_ttl%",
+            ]
+
     App\EventSubscriber\UserCreateSubscriber:
         tags:
             - { name: kernel.event_subscriber, event: user.create }
-            
