@@ -7,11 +7,12 @@ use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoder;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
-class AppFixtures extends Fixture
+class UserFixtures extends Fixture
 {
-    private UserPasswordEncoder $passEnc;
-    public function __construct(UserPasswordEncoder $passEnc)
+    private UserPasswordEncoderInterface  $passEnc;
+    public function __construct(UserPasswordEncoderInterface $passEnc)
     {
         $this->passEnc = $passEnc;
     }
@@ -20,7 +21,7 @@ class AppFixtures extends Fixture
         $user = new User();
         $user->setBio("oh my gott");
         $user->setName("Jonh");
-        $user->setName("Lech");
+        $user->setSurname("Lech");
         $user->setEmail("adsa@gmail.com");
         $user->setGender("male");
         $user->setDateOfBirth(new DateTime("2002-12-12"));
