@@ -3,9 +3,6 @@
 namespace App\Tests\Controller;
 
 use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase;
-use Symfony\Component\HttpClient\Exception\ClientException;
-use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 class AuthControllerTest extends ApiTestCase
 {
