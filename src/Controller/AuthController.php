@@ -87,7 +87,7 @@ class AuthController extends AbstractController
             throw new ErrorException("user with this email exist!", 400);
         }
     }
-    //TODO: tests for create() and error handling based on kernel::exception $event
+    //TODO: tests for create()
 
     /**
      * @Route("/account", name="auth_remove_account", methods={"DELETE"})
