@@ -4,9 +4,10 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Event\UserCreateEvent;
-use App\Service\SchemaValidator;
+use App\Service\JsonDecoder;
 use App\Service\UUIDService;
-use DateTime;
+use App\Service\ValidatorService;
+use Doctrine\ORM\EntityManagerInterface;
 use Gesdinet\JWTRefreshTokenBundle\Entity\RefreshToken;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -26,15 +27,30 @@ class AuthController extends AbstractController
 {
 
     private EventDispatcherInterface $eventDispatcher;
-    private SchemaValidator $schemaValidator;
+    private ValidatorService $validator;
     private UserPasswordEncoderInterface $passEnc;
     private JWTEncoderInterface $JWTEncoderInterface;
-    public function __construct(JWTEncoderInterface $JWTEncoderInterface, EventDispatcherInterface $eventDispatcher, SchemaValidator $schemaValidator, UserPasswordEncoderInterface $passEnc)
-    {
+    private ProfileController $profileController;
+    private JsonDecoder $jsonDecoder;
+    private EntityManagerInterface $em;
+    private Serializer $serializer;
+    public function __construct(
+        JsonDecoder $jsonDecoder,
+        ProfileController $profileController,
+        JWTEncoderInterface $JWTEncoderInterface,
+        EventDispatcherInterface $eventDispatcher,
+        ValidatorService $validator,
+        UserPasswordEncoderInterface $passEnc,
+        EntityManagerInterface $em
+    ) {
         $this->eventDispatcher = $eventDispatcher;
-        $this->schemaValidator = $schemaValidator;
+        $this->validator = $validator;
         $this->passEnc = $passEnc;
         $this->JWTEncoderInterface = $JWTEncoderInterface;
+        $this->profileController = $profileController;
+        $this->jsonDecoder = $jsonDecoder;
+        $this->em = $em;
+        $this->serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
     }
     /**
      * @Route("/login", name="auth_login")
@@ -42,45 +58,36 @@ class AuthController extends AbstractController
     public function login()
     {
     }
+
     /**
      * @Route("/register", name="auth_register")
      */
-    public function add(Request $req): JsonResponse
+    public function create(Request $request): JsonResponse
     {
-        $reqData = [];
-        if ($content = $req->getContent()) {
-            $reqData = json_decode($content, true);
-        }
-        $result = $this->schemaValidator->validateSchema('/../Schemas/registerSchema.json', (object)$reqData);
-        if ($result === true) {
-            $user = new User();
-            $em = $this->getDoctrine()->getManager();
-            if (!$em->getRepository(User::class)->findOneBy(["us_email" => $reqData['email']])) {
-                $user->setEmail($reqData['email']);
-                $user->setPassword($this->passEnc->encodePassword($user, $reqData['password']));
-                if (!$this->schemaValidator->verifyDate($reqData['date_of_birth'])) {
-                    return new JsonResponse(["error" => "invalid date"], 400);
+        $requestData = $this->jsonDecoder->decode($request);
+        $validationResult = $this->validator->validateSchema('/../Schemas/registerSchema.json', (object)$requestData);
+        if ($validationResult === true) {
+            if (!$this->em->getRepository(User::class)->findOneBy(["us_email" => $requestData['email']])) {
+                $isInDatabase = true;
+                while ($isInDatabase) {
+                    $tag = $this->profileController->generateTag($requestData["name"], $requestData["surname"]);
+                    if (!$this->em->getRepository(User::class)->findOneBy(["us_tag" => $tag])) {
+                        $requestData["tag"] = $tag;
+                        $isInDatabase = false;
+                    }
                 }
-                $user->setDateOfBirth(new DateTime($reqData['date_of_birth']));
-                $user->setGender($reqData['gender']);
-                $user->setName($reqData['name']);
-                $user->setSurname($reqData['surname']);
-                $user->setRoles([]);
-                $user->setVerified(false);
-                $user->setProfilePicUrl("https://res.cloudinary.com/faceprism/image/upload/v1626432519/profile_pics/default_bbdyw0.png");
-                $user->setTag("@" . $reqData['email']);
-                $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-                $resData = $serializer->serialize($user, "json", ['ignored_attributes' => ['usPosts', "transitions", "timezone"]]);
-                $em->persist($user);
-                $em->flush();
-                $response = JsonResponse::fromJsonString($resData, 201);
-                $event = $this->eventDispatcher->dispatch(new UserCreateEvent($user, $response), UserCreateEvent::NAME);
+                $user = new User($requestData);
+                $user->setPassword($this->passEnc->encodePassword($user, $requestData["password"]));
+                $this->em->persist($user);
+                $this->em->flush();
+                $resData = $this->serializer->serialize($user, "json", ['ignored_attributes' => ['posts', "transitions", "timezone"]]);
+                $event = $this->eventDispatcher->dispatch(new UserCreateEvent($user, JsonResponse::fromJsonString($resData, 201)), UserCreateEvent::NAME);
                 return $event->getResponse();
             } else {
                 return new JsonResponse(["error" => "user with this email exist!"], 400);
             }
         } else {
-            return $result;
+            return $validationResult;
         }
     }
     /**

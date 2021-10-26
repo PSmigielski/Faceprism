@@ -2,34 +2,40 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "properties": {
-        "email":{
+        "email": {
             "type": "string",
             "maxLength": 128,
             "format": "email"
         },
-        "password":{
+        "password": {
             "type": "string",
             "minLength": 8,
             "maxLength": 196
         },
-        "name":{
+        "name": {
             "type": "string",
             "maxLength": 30
         },
-        "surname":{
+        "surname": {
             "type": "string",
             "maxLength": 100
         },
-        "date_of_birth":{
+        "date_of_birth": {
             "type": "string",
-            "minLength": 10,
-            "maxLength": 10
+            "format": "date"
         },
-        "gender":{
-            "type":"string",
+        "gender": {
+            "type": "string",
             "maxLength": 20
         }
     },
-    "required": ["email", "password", "name", "surname", "date_of_birth", "gender"],
+    "required": [
+        "email",
+        "password",
+        "name",
+        "surname",
+        "date_of_birth",
+        "gender"
+    ],
     "additionalProperties": false
 }

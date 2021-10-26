@@ -3,9 +3,11 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
@@ -86,8 +88,19 @@ class User implements UserInterface
      */
     private $us_tag;
 
-    public function __construct()
+    public function __construct(array $data = null)
     {
+        if (!is_null($data)) {
+            $this->setEmail($data["email"]);
+            $this->setDateOfBirth(new DateTime($data["date_of_birth"]));
+            $this->setGender($data["gender"]);
+            $this->setName($data["name"]);
+            $this->setSurname($data["surname"]);
+            $this->setRoles([]);
+            $this->setVerified(false);
+            $this->setProfilePicUrl("https://res.cloudinary.com/faceprism/image/upload/v1626432519/profile_pics/default_bbdyw0.png");
+            $this->setTag($data["tag"]);
+        }
         $this->us_posts = new ArrayCollection();
     }
 

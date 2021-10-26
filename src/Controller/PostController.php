@@ -18,7 +18,7 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 use App\Service\ImageUploader;
-use App\Service\SchemaValidator;
+use App\Service\ValidatorService;
 use App\Service\UUIDService;
 use Opis\JsonSchema\MediaTypes\Json;
 use PaginationService;
@@ -99,7 +99,7 @@ class PostController extends AbstractController
     /**
      * @Route("", name="add_or_edit_post", methods={"POST"})
      */
-    public function create_or_edit(Request $request, ImageUploader $imageUploader, SchemaValidator $schemaValidator): JsonResponse
+    public function create_or_edit(Request $request, ImageUploader $imageUploader, ValidatorService $ValidatorService): JsonResponse
     {
         $em = $this->getDoctrine()->getManager();
         $pageID = $request->query->get("p", null);
@@ -177,7 +177,7 @@ class PostController extends AbstractController
                     $data["fileType"] = "video";
                 }
             }
-            $result = $schemaValidator->validateFormData($data);
+            $result = $ValidatorService->validateFormData($data);
             if ($result !== true) {
                 return $result;
             } else {

@@ -7,7 +7,7 @@ use App\Entity\PageModeration;
 use App\Entity\User;
 use App\Repository\PageRepository;
 use App\Service\ImageUploader;
-use App\Service\SchemaValidator;
+use App\Service\ValidatorService;
 use App\Service\UUIDService;
 use PaginationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -70,7 +70,7 @@ class PageController extends AbstractController
     /**
      * @Route("",name="create_or_edit_page", methods={"POST"})
      */
-    public function create(Request $request, ImageUploader $imageUploader, SchemaValidator $schemaValidator): JsonResponse
+    public function create(Request $request, ImageUploader $imageUploader, ValidatorService $ValidatorService): JsonResponse
     {
         $pageID = $request->query->get("p", null);
         $payload = $request->attributes->get("payload");
@@ -134,8 +134,8 @@ class PageController extends AbstractController
         if (!is_null($banner)) {
             $data["banner"] = $banner;
         }
-        if ($schemaValidator->validateFormData($data) !== true) {
-            return $schemaValidator->validateFormData($data);
+        if ($ValidatorService->validateFormData($data) !== true) {
+            return $ValidatorService->validateFormData($data);
         } else {
             foreach ($data as $key => $value) {
                 match ($key) {

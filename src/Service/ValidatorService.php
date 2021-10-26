@@ -7,12 +7,10 @@ use Opis\JsonSchema\{
     Validator,
     Schema
 };
-use PhpParser\Node\Stmt\Break_;
-use PhpParser\Node\Stmt\Return_;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
+
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-class SchemaValidator
+class ValidatorService
 {
     public function validateSchema(string $pathToSchema, object $data)
     {
@@ -24,17 +22,6 @@ class SchemaValidator
         } else {
             return $this->getErrorMessage($result);
         }
-    }
-    static public function verifyDate($date, $strict = true): bool
-    {
-        $dateTime = DateTime::createFromFormat('Y-m-d', $date);
-        if ($strict) {
-            $errors = DateTime::getLastErrors();
-            if (!empty($errors['warning_count'])) {
-                return false;
-            }
-        }
-        return $dateTime !== false;
     }
     public function validateFormData(array $data): JsonResponse | bool
     {
@@ -90,7 +77,14 @@ class SchemaValidator
     {
         switch ($result->getFirstError()->keyword()) {
             case "format":
-                return new JsonResponse(["error" => "invalid email format"], 400);
+                switch ($result->getFirstError()->dataPointer()[0]) {
+                    case "email":
+                        return new JsonResponse(["error" => "invalid email format"], 400);
+                        break;
+                    case "date_of_birth":
+                        return new JsonResponse(["error" => "invalid date format YYYY-MM-DD required"], 400);
+                        break;
+                }
                 break;
             case "type":
                 switch ($result->getFirstError()->dataPointer()[0]) {

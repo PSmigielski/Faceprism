@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Service\SchemaValidator;
+use App\Service\ValidatorService;
 use Opis\JsonSchema\Schema;
 use Opis\JsonSchema\Validator;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -38,23 +38,21 @@ class ResetPasswordController extends AbstractController
      *
      * @Route("", name="forgot_password_request")
      */
-    public function request(Request $request, MailerInterface $mailer, SchemaValidator $schemaValidator): Response
+    public function request(Request $request, MailerInterface $mailer, ValidatorService $ValidatorService): Response
     {
         $reqData = [];
-        if($content = $request->getContent()){
-            $reqData=json_decode($content, true);
+        if ($content = $request->getContent()) {
+            $reqData = json_decode($content, true);
         }
-        $result = $schemaValidator->validateSchema('/../Schemas/resetPasswordRequestSchema.json', (object)$reqData);
-        if($result===true){
+        $result = $ValidatorService->validateSchema('/../Schemas/resetPasswordRequestSchema.json', (object)$reqData);
+        if ($result === true) {
             return $this->processSendingPasswordResetEmail(
                 $reqData['email'],
                 $mailer
             );
-        }
-        else{
+        } else {
             return $result;
         }
-
     }
 
     /**
@@ -62,7 +60,7 @@ class ResetPasswordController extends AbstractController
      *
      * @Route("/{token}")
      */
-    public function reset(Request $request, UserPasswordEncoderInterface $passwordEncoder, string $token= null): JsonResponse
+    public function reset(Request $request, UserPasswordEncoderInterface $passwordEncoder, string $token = null): JsonResponse
     {
         if (null === $token) {
             return new JsonResponse(["message" => 'No reset password token found in the URL or in the session.'], 400);
@@ -76,13 +74,13 @@ class ResetPasswordController extends AbstractController
             )], 200);
         }
         $reqData = [];
-        if($content = $request->getContent()){
-            $reqData=json_decode($content, true);
+        if ($content = $request->getContent()) {
+            $reqData = json_decode($content, true);
         }
-        $schema = Schema::fromJsonString(file_get_contents(__DIR__.'/../Schemas/resetPasswordSchema.json'));
+        $schema = Schema::fromJsonString(file_get_contents(__DIR__ . '/../Schemas/resetPasswordSchema.json'));
         $validator = new Validator();
         $result = $validator->schemaValidation((object)$reqData, $schema);
-        if($result->isValid()){
+        if ($result->isValid()) {
             $password = $reqData['password'];
             $encodedPassword = $passwordEncoder->encodePassword(
                 $user,
@@ -92,7 +90,6 @@ class ResetPasswordController extends AbstractController
             $this->getDoctrine()->getManager()->flush();
             return new JsonResponse(["message" => "password has been changed"], 200);
         }
-
     }
 
     private function processSendingPasswordResetEmail(string $email, MailerInterface $mailer): JsonResponse
