@@ -28,6 +28,7 @@ class AuthControllerTest extends ApiTestCase
     }
     public function testCantLoginWithWrongCredentials(): void
     {
+        //TODO:add new exprected errors
         $client = self::createClient();
         $data = [
             "email" => "adsasda@gmail.com",
@@ -52,4 +53,5 @@ class AuthControllerTest extends ApiTestCase
         $this->assertBrowserNotHasCookie("BEARER");
         $this->assertBrowserNotHasCookie("REFRESH_TOKEN");
     }
+    //TODO: add tests for create method
 }
