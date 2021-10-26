@@ -8,6 +8,7 @@ use App\Service\JsonDecoder;
 use App\Service\UUIDService;
 use App\Service\ValidatorService;
 use Doctrine\ORM\EntityManagerInterface;
+use ErrorException;
 use Gesdinet\JWTRefreshTokenBundle\Entity\RefreshToken;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -65,31 +66,29 @@ class AuthController extends AbstractController
     public function create(Request $request): JsonResponse
     {
         $requestData = $this->jsonDecoder->decode($request);
-        $validationResult = $this->validator->validateSchema('/../Schemas/registerSchema.json', (object)$requestData);
-        if ($validationResult === true) {
-            if (!$this->em->getRepository(User::class)->findOneBy(["us_email" => $requestData['email']])) {
-                $isInDatabase = true;
-                while ($isInDatabase) {
-                    $tag = $this->profileController->generateTag($requestData["name"], $requestData["surname"]);
-                    if (!$this->em->getRepository(User::class)->findOneBy(["us_tag" => $tag])) {
-                        $requestData["tag"] = $tag;
-                        $isInDatabase = false;
-                    }
+        $this->validator->validateSchema('/../Schemas/registerSchema.json', (object)$requestData);
+        if (!$this->em->getRepository(User::class)->findOneBy(["us_email" => $requestData['email']])) {
+            $isInDatabase = true;
+            do {
+                $tag = $this->profileController->generateTag($requestData["name"], $requestData["surname"]);
+                if (!$this->em->getRepository(User::class)->findOneBy(["us_tag" => $tag])) {
+                    $requestData["tag"] = $tag;
+                    $isInDatabase = false;
                 }
-                $user = new User($requestData);
-                $user->setPassword($this->passEnc->encodePassword($user, $requestData["password"]));
-                $this->em->persist($user);
-                $this->em->flush();
-                $resData = $this->serializer->serialize($user, "json", ['ignored_attributes' => ['posts', "transitions", "timezone"]]);
-                $event = $this->eventDispatcher->dispatch(new UserCreateEvent($user, JsonResponse::fromJsonString($resData, 201)), UserCreateEvent::NAME);
-                return $event->getResponse();
-            } else {
-                return new JsonResponse(["error" => "user with this email exist!"], 400);
-            }
+            } while ($isInDatabase);
+            $user = new User($requestData);
+            $user->setPassword($this->passEnc->encodePassword($user, $requestData["password"]));
+            $this->em->persist($user);
+            $this->em->flush();
+            $resData = $this->serializer->serialize($user, "json", ['ignored_attributes' => ['posts', "transitions", "timezone"]]);
+            $event = $this->eventDispatcher->dispatch(new UserCreateEvent($user, JsonResponse::fromJsonString($resData, 201)), UserCreateEvent::NAME);
+            return $event->getResponse();
         } else {
-            return $validationResult;
+            throw new ErrorException("user with this email exist!", 400);
         }
     }
+    //TODO: tests for create() and error handling based on kernel::exception $event
+
     /**
      * @Route("/account", name="auth_remove_account", methods={"DELETE"})
      */
