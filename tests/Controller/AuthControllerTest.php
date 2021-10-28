@@ -28,7 +28,6 @@ class AuthControllerTest extends ApiTestCase
     }
     public function testCantLoginWithWrongCredentials(): void
     {
-        //TODO:add new exprected errors
         $client = self::createClient();
         $data = [
             "email" => "adsasda@gmail.com",
@@ -42,13 +41,27 @@ class AuthControllerTest extends ApiTestCase
         $this->assertBrowserNotHasCookie("BEARER");
         $this->assertBrowserNotHasCookie("REFRESH_TOKEN");
         $data = json_decode($client->getResponse()->getContent(false), true);
-        $this->assertArrayHasKey("code", $data);
-        $this->assertArrayHasKey("message", $data);
-        $data = [];
+        $this->assertArrayHasKey("error", $data);
+        $this->assertEquals("Bad credentials.", $data["error"]);
+        $data = ["password" => ""];
         $client->request("POST", "http://localhost:8000/v1/api/auth/login", [
             'headers' => ['Content-Type' => 'application/json'],
             'json' => $data,
         ]);
+        $data = json_decode($client->getResponse()->getContent(false), true);
+        $this->assertArrayHasKey("error", $data);
+        $this->assertEquals("The key \"email\" must be provided.", $data["error"]);
+        $this->assertEquals(400, $client->getResponse()->getStatusCode());
+        $this->assertBrowserNotHasCookie("BEARER");
+        $this->assertBrowserNotHasCookie("REFRESH_TOKEN");
+        $data = ["email" => ""];
+        $client->request("POST", "http://localhost:8000/v1/api/auth/login", [
+            'headers' => ['Content-Type' => 'application/json'],
+            'json' => $data,
+        ]);
+        $data = json_decode($client->getResponse()->getContent(false), true);
+        $this->assertArrayHasKey("error", $data);
+        $this->assertEquals("The key \"password\" must be provided.", $data["error"]);
         $this->assertEquals(400, $client->getResponse()->getStatusCode());
         $this->assertBrowserNotHasCookie("BEARER");
         $this->assertBrowserNotHasCookie("REFRESH_TOKEN");

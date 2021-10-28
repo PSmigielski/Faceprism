@@ -10,7 +10,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
 {
     public static function setErrorResponse(ExceptionEvent $event)
     {
-        $event->setResponse(new JsonResponse(["error" => $event->getThrowable()->getMessage()], $event->getThrowable()->getCode() ? $event->getThrowable()->getCode() : 500));
+        $event->setResponse(new JsonResponse(["error" => $event->getThrowable()->getMessage()], $event->getThrowable()->getCode() ? $event->getThrowable()->getCode() : ($event->getThrowable()->getStatusCode() ? $event->getThrowable()->getStatusCode() : 500)));
     }
 
     public static function getSubscribedEvents()
