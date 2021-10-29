@@ -96,89 +96,41 @@ class AuthControllerTest extends ApiTestCase
         $this->assertEquals("Your account has been created successfully!", $data["message"]);
         $this->assertEquals(true, $data["isMailSent"]);
     }
-    public function testCannotCreateUserWithoutEmail(): void
+    public function testCannotCreateUserWithoutData(): void
     {
-        $data = [];
+        $fullData = [
+            "email" => "xdsadadasd@gmail.com",
+            "password" => "StrongPassword",
+            "name" => "jan",
+            "surname" =>  "dumas",
+            "date_of_birth" =>  "2002-11-20",
+        ];
+        $errorResponses = [
+            "email is missing",
+            "password is missing",
+            "name is missing",
+            "surname is missing",
+            "date of birth is missing",
+            "gender is missing"
+        ];
         $client = self::createClient();
-        $client->request("POST", "http://localhost:8000/v1/api/auth/register", [
-            'headers' => ['Content-Type' => 'application/json'],
-            'json' => $data,
-        ]);
-        $data = $client->getResponse()->getContent(false);
-        $data = json_decode($data, true);
-        $this->assertArrayHasKey("error", $data);
-        $this->assertResponseStatusCodeSame(400);
-        $this->assertEquals("email is missing", $data["error"]);
-    }
-    public function testCannotCreateUserWithoutPassword(): void
-    {
-        $data = ["email" => ""];
-        $client = self::createClient();
-        $client->request("POST", "http://localhost:8000/v1/api/auth/register", [
-            'headers' => ['Content-Type' => 'application/json'],
-            'json' => $data,
-        ]);
-        $data = $client->getResponse()->getContent(false);
-        $data = json_decode($data, true);
-        $this->assertArrayHasKey("error", $data);
-        $this->assertResponseStatusCodeSame(400);
-        $this->assertEquals("password is missing", $data["error"]);
-    }
-    public function testCannotCreateUserWithoutName(): void
-    {
-        $data = ["email" => "", "password" => ""];
-        $client = self::createClient();
-        $client->request("POST", "http://localhost:8000/v1/api/auth/register", [
-            'headers' => ['Content-Type' => 'application/json'],
-            'json' => $data,
-        ]);
-        $data = $client->getResponse()->getContent(false);
-        $data = json_decode($data, true);
-        $this->assertArrayHasKey("error", $data);
-        $this->assertResponseStatusCodeSame(400);
-        $this->assertEquals("name is missing", $data["error"]);
-    }
-    public function testCannotCreateUserWithoutSurname(): void
-    {
-        $data = ["email" => "", "password" => "", "name" => ""];
-        $client = self::createClient();
-        $client->request("POST", "http://localhost:8000/v1/api/auth/register", [
-            'headers' => ['Content-Type' => 'application/json'],
-            'json' => $data,
-        ]);
-        $data = $client->getResponse()->getContent(false);
-        $data = json_decode($data, true);
-        $this->assertArrayHasKey("error", $data);
-        $this->assertResponseStatusCodeSame(400);
-        $this->assertEquals("surname is missing", $data["error"]);
-    }
-    public function testCannotCreateUserWithoutDateOfBirth(): void
-    {
-        $data = ["email" => "", "password" => "", "name" => "", "surname" => ""];
-        $client = self::createClient();
-        $client->request("POST", "http://localhost:8000/v1/api/auth/register", [
-            'headers' => ['Content-Type' => 'application/json'],
-            'json' => $data,
-        ]);
-        $data = $client->getResponse()->getContent(false);
-        $data = json_decode($data, true);
-        $this->assertArrayHasKey("error", $data);
-        $this->assertResponseStatusCodeSame(400);
-        $this->assertEquals("date of birth is missing", $data["error"]);
-    }
-    public function testCannotCreateUserWithoutGender(): void
-    {
-        $data = ["email" => "", "password" => "", "name" => "", "surname" => "", "date_of_birth" =>  "2002-11-20"];
-        $client = self::createClient();
-        $client->request("POST", "http://localhost:8000/v1/api/auth/register", [
-            'headers' => ['Content-Type' => 'application/json'],
-            'json' => $data,
-        ]);
-        $data = $client->getResponse()->getContent(false);
-        $data = json_decode($data, true);
-        $this->assertArrayHasKey("error", $data);
-        $this->assertResponseStatusCodeSame(400);
-        $this->assertEquals("gender is missing", $data["error"]);
+        for ($i = 0; $i < 6; $i++) {
+            $testData = [];
+            if ($i != 0) {
+                for ($j = $i - 1; $j >= 0; $j--) {
+                    $testData[array_keys($fullData)[$j]] = array_values($fullData)[$j];
+                }
+            }
+            $client->request("POST", "http://localhost:8000/v1/api/auth/register", [
+                'headers' => ['Content-Type' => 'application/json'],
+                'json' => $testData,
+            ]);
+            $data = $client->getResponse()->getContent(false);
+            $data = json_decode($data, true);
+            $this->assertArrayHasKey("error", $data);
+            $this->assertResponseStatusCodeSame(400);
+            $this->assertEquals($errorResponses[$i], $data["error"]);
+        }
     }
     public function testCannotCreateUserWithWrongEmailFromat(): void
     {
@@ -258,7 +210,6 @@ class AuthControllerTest extends ApiTestCase
         $client->request("DELETE", "http://localhost:8000/v1/api/auth/account", [
             'headers' => ['Content-Type' => 'application/json', "set-cookie" => $headers["set-cookie"]],
         ]);
-        dump($client->getResponse());
         $data = $client->getResponse()->getContent();
         $data = json_decode($data, true);
         $this->assertArrayHasKey("message", $data);
