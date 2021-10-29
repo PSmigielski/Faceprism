@@ -16,6 +16,13 @@
             "type": "string",
             "maxLength": 30
         },
+        "gender": {
+            "type": "string",
+            "enum": [
+                "male",
+                "female"
+            ]
+        },
         "surname": {
             "type": "string",
             "maxLength": 100
@@ -23,10 +30,6 @@
         "date_of_birth": {
             "type": "string",
             "format": "date"
-        },
-        "gender": {
-            "type": "string",
-            "maxLength": 20
         }
     },
     "required": [

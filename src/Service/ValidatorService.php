@@ -73,6 +73,9 @@ class ValidatorService
     private function getErrorMessage(object $result)
     {
         switch ($result->getFirstError()->keyword()) {
+            case "enum":
+                throw new ErrorException("expected male or female", 400);
+                break;
             case "format":
                 switch ($result->getFirstError()->dataPointer()[0]) {
                     case "email":
@@ -138,12 +141,6 @@ class ValidatorService
                     case "password":
                         throw new ErrorException("password is too short", 400);
                         break;
-                    case "date_of_birth":
-                        throw new ErrorException("date of birth has wrong format", 400);
-                        break;
-                    case "author_uuid":
-                        throw new ErrorException("author uuid has wrong fromat", 400);
-                        break;
                     case "bio":
                         throw new ErrorException("surname is too short", 400);
                         break;
@@ -151,12 +148,6 @@ class ValidatorService
                 break;
             case "required":
                 switch ($result->getFirstError()->keywordArgs()["missing"]) {
-                    case "author_uuid":
-                        throw new ErrorException("author uuid is missing", 400);
-                        break;
-                    case "post_uuid":
-                        throw new ErrorException("post uuid is missing", 400);
-                        break;
                     case "password":
                         throw new ErrorException("password is missing", 400);
                         break;
@@ -174,6 +165,9 @@ class ValidatorService
                         break;
                     case "text":
                         throw new ErrorException("text is missing", 400);
+                        break;
+                    case "gender":
+                        throw new ErrorException("gender is missing", 400);
                         break;
                 }
                 break;
