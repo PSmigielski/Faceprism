@@ -102,7 +102,7 @@ class AuthController extends AbstractController
         }
         $em->remove($user);
         $em->flush();
-        return new JsonResponse(["message" => "User has been deleted"], 201);
+        return new JsonResponse(["message" => "User has been deleted"], 202);
     }
     /**
      * @Route("/account", name="auth_update_account", methods={"PUT"})

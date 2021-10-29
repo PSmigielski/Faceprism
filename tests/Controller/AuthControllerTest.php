@@ -243,4 +243,26 @@ class AuthControllerTest extends ApiTestCase
         $this->assertResponseStatusCodeSame(400);
         $this->assertEquals("expected male or female", $data["error"]);
     }
+    public function testCanRemoveUser(): void
+    {
+        $client = self::createClient();
+        $data = [
+            "email" => "adsa@gmail.com",
+            "password" => "StrongPassword"
+        ];
+        $client->request("POST", "http://localhost:8000/v1/api/auth/login", [
+            'headers' => ['Content-Type' => 'application/json'],
+            'json' => $data,
+        ]);
+        $headers = $client->getResponse()->getHeaders();
+        $client->request("DELETE", "http://localhost:8000/v1/api/auth/account", [
+            'headers' => ['Content-Type' => 'application/json', "set-cookie" => $headers["set-cookie"]],
+        ]);
+        dump($client->getResponse());
+        $data = $client->getResponse()->getContent();
+        $data = json_decode($data, true);
+        $this->assertArrayHasKey("message", $data);
+        $this->assertEquals("User has been deleted", $data["message"]);
+        $this->assertResponseStatusCodeSame(202);
+    }
 }

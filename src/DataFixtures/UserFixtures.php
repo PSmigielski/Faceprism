@@ -28,7 +28,7 @@ class UserFixtures extends Fixture
         $user->setTag("@liechu");
         $user->setPassword($this->passEnc->encodePassword($user, "StrongPassword"));
         $user->setRoles([]);
-        $user->setVerified(false);
+        $user->setVerified(true);
         $user->setProfilePicUrl("https://res.cloudinary.com/faceprism/image/upload/v1626432519/profile_pics/default_bbdyw0.png");
         $manager->persist($user);
         $manager->flush();
