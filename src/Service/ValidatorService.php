@@ -119,9 +119,6 @@ class ValidatorService
                     case "password":
                         throw new ErrorException("password is too long", 400);
                         break;
-                    case "date_of_birth":
-                        throw new ErrorException("date of birth has wrong format", 400);
-                        break;
                     case "email":
                         throw new ErrorException("email is too long", 400);
                         break;
@@ -132,7 +129,7 @@ class ValidatorService
                         throw new ErrorException("surname is too long", 400);
                         break;
                     case "bio":
-                        throw new ErrorException("surname is too long", 400);
+                        throw new ErrorException("bio is too long", 400);
                         break;
                 }
                 break;

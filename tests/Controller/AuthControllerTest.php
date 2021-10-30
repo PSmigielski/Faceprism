@@ -132,68 +132,82 @@ class AuthControllerTest extends ApiTestCase
             $this->assertEquals($errorResponses[$i], $data["error"]);
         }
     }
-    public function testCannotCreateUserWithWrongEmailFromat(): void
+    public function testCannotCreateUserWithInvalidData(): void
     {
-        $data = [
-            "email" => "xdsadadasdgmail.com",
-            "password" => "StrongPassword",
-            "name" => "jan",
-            "surname" =>  "dumas",
-            "date_of_birth" =>  "2002-11-20",
-            "gender" => "male"
+        $invalidData = [
+            "email" => [
+                "asdfghjklpasdfghjklpasdfghjklpasdfghjklpasdfghjklpasdfghjklpasdfghjklpasdfghjklpasdfghjklpasdfghjklpasdfghjklpasdfghjklpasdfghjklpasdfghjklp@gmail.com",
+                123213123123213123,
+                "xdsadadasdgmail.com"
+            ],
+            "password" => [
+                "StrongPassword12StrongPassword12StrongPassword12StrongPassword12StrongPassword12StrongPassword12StrongPassword12StrongPassword12StrongPassword12StrongPassword12StrongPassword12StrongPassword12StrongPassword12StrongPassword12StrongPassword12StrongPassword12",
+                123123123123123123,
+                "asd"
+            ],
+            "name" => ["janjanjanjanjanjanjanjanjanjanjanjan", 123123123123],
+            "surname" =>  [
+                "dumasasdsddumasasdsddumasasdsddumasasdsddumasasdsddumasasdsddumasasdsddumasasdsddumasasdsddumasasdsddumasasdsd",
+                123123123123
+            ],
+            "date_of_birth" => [
+                "12-12-2002"
+            ],
+            "gender" => [
+                "adasdasd"
+            ]
+        ];
+        $errorResponses = [
+            "email" => [
+                "email is too long",
+                "email has invalid type",
+                "invalid email format"
+            ],
+            "password" => [
+                "password is too long",
+                "password has invalid type",
+                "password is too short"
+            ],
+            "name" => [
+                "name is too long",
+                "name has invalid type"
+            ],
+            "surname" => [
+                "surname is too long",
+                "surname has invalid type"
+            ],
+            "date_of_birth" => [
+                "invalid date format YYYY-MM-DD required"
+            ],
+            "gender" => [
+                "expected male or female"
+            ]
         ];
         $client = self::createClient();
-        $client->request("POST", "http://localhost:8000/v1/api/auth/register", [
-            'headers' => ['Content-Type' => 'application/json'],
-            'json' => $data,
-        ]);
-        $data = $client->getResponse()->getContent(false);
-        $data = json_decode($data, true);
-        $this->assertArrayHasKey("error", $data);
-        $this->assertResponseStatusCodeSame(400);
-        $this->assertEquals("invalid email format", $data["error"]);
-    }
-    public function testCannotCreateUserWithWrongDateFromat(): void
-    {
-        $data = [
-            "email" => "xdsadadasd@gmail.com",
-            "password" => "StrongPassword",
-            "name" => "jan",
-            "surname" =>  "dumas",
-            "date_of_birth" =>  "200211-20",
-            "gender" => "male"
-        ];
-        $client = self::createClient();
-        $client->request("POST", "http://localhost:8000/v1/api/auth/register", [
-            'headers' => ['Content-Type' => 'application/json'],
-            'json' => $data,
-        ]);
-        $data = $client->getResponse()->getContent(false);
-        $data = json_decode($data, true);
-        $this->assertArrayHasKey("error", $data);
-        $this->assertResponseStatusCodeSame(400);
-        $this->assertEquals("invalid date format YYYY-MM-DD required", $data["error"]);
-    }
-    public function testCannotCreateUserWithWrongGender(): void
-    {
-        $data = [
-            "email" => "xdsadadasd@gmail.com",
-            "password" => "StrongPassword",
-            "name" => "jan",
-            "surname" =>  "dumas",
-            "date_of_birth" =>  "2002-11-20",
-            "gender" => "nonbinary"
-        ];
-        $client = self::createClient();
-        $client->request("POST", "http://localhost:8000/v1/api/auth/register", [
-            'headers' => ['Content-Type' => 'application/json'],
-            'json' => $data,
-        ]);
-        $data = $client->getResponse()->getContent(false);
-        $data = json_decode($data, true);
-        $this->assertArrayHasKey("error", $data);
-        $this->assertResponseStatusCodeSame(400);
-        $this->assertEquals("expected male or female", $data["error"]);
+        for ($i = 0; $i < 4; $i++) {
+            foreach ($invalidData as $key => $invalidDataArray) {
+                foreach ($invalidDataArray as $index => $value) {
+                    $data = [
+                        "email" => "xdsadadasd@gmail.com",
+                        "password" => "StrongPassword",
+                        "name" => "jan",
+                        "surname" =>  "dumas",
+                        "date_of_birth" =>  "2002-11-20",
+                        "gender" => "male"
+                    ];
+                    $data[$key] = $value;
+                    $client->request("POST", "http://localhost:8000/v1/api/auth/register", [
+                        'headers' => ['Content-Type' => 'application/json'],
+                        'json' => $data,
+                    ]);
+                    $responseData = $client->getResponse()->getContent(false);
+                    $responseData = json_decode($responseData, true);
+                    $this->assertArrayHasKey("error", $responseData);
+                    $this->assertResponseStatusCodeSame(400);
+                    $this->assertEquals($errorResponses[$key][$index], $responseData["error"]);
+                }
+            }
+        }
     }
     public function testCanRemoveUser(): void
     {
@@ -215,5 +229,19 @@ class AuthControllerTest extends ApiTestCase
         $this->assertArrayHasKey("message", $data);
         $this->assertEquals("User has been deleted", $data["message"]);
         $this->assertResponseStatusCodeSame(202);
+    }
+    public function testCannotRemoveUserWithoutToken(): void
+    {
+        $client = self::createClient();
+        $client->request("DELETE", "http://localhost:8000/v1/api/auth/account", [
+            'headers' => ['Content-Type' => 'application/json']
+        ]);
+        $data = $client->getResponse()->getContent(false);
+        $data = json_decode($data, true);
+        $this->assertArrayHasKey("error", $data);
+        $this->assertEquals("JWT Token not found", $data["error"]);
+        $this->assertBrowserNotHasCookie("BEARER");
+        $this->assertBrowserNotHasCookie("REFRESH_TOKEN");
+        $this->assertResponseStatusCodeSame(401);
     }
 }

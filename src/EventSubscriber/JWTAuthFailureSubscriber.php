@@ -17,6 +17,9 @@ class JWTAuthFailureSubscriber implements EventSubscriberInterface
         return [
             'lexik_jwt_authentication.on_authentication_failure' => [
                 ['getError']
+            ],
+            "lexik_jwt_authentication.on_jwt_not_found" => [
+                ['getError']
             ]
         ];
     }
