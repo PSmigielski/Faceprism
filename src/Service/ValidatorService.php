@@ -8,7 +8,6 @@ use Opis\JsonSchema\{
     Schema
 };
 
-
 class ValidatorService
 {
     public function validateSchema(string $pathToSchema, object $data)
@@ -73,6 +72,12 @@ class ValidatorService
     private function getErrorMessage(object $result)
     {
         switch ($result->getFirstError()->keyword()) {
+            case "pattern":
+                switch ($result->getFirstError()->dataPointer()[0]) {
+                    case "tag":
+                        throw new ErrorException("invalid tag given", 400);
+                        break;
+                }
             case "enum":
                 throw new ErrorException("expected male or female", 400);
                 break;
@@ -128,6 +133,9 @@ class ValidatorService
                     case "surname":
                         throw new ErrorException("surname is too long", 400);
                         break;
+                    case "tag":
+                        throw new ErrorException("tag is too long", 400);
+                        break;
                     case "bio":
                         throw new ErrorException("bio is too long", 400);
                         break;
@@ -139,7 +147,7 @@ class ValidatorService
                         throw new ErrorException("password is too short", 400);
                         break;
                     case "bio":
-                        throw new ErrorException("surname is too short", 400);
+                        throw new ErrorException("bio is too short", 400);
                         break;
                 }
                 break;
@@ -165,6 +173,9 @@ class ValidatorService
                         break;
                     case "gender":
                         throw new ErrorException("gender is missing", 400);
+                        break;
+                    case "tag":
+                        throw new ErrorException("tag is missing", 400);
                         break;
                 }
                 break;

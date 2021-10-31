@@ -19,10 +19,6 @@ use Symfony\Component\Serializer\Serializer;
  */
 class ProfileController extends AbstractController
 {
-    public function generateTag(string $name, string $surname)
-    {
-        return "@" . $name . $surname . rand(10000, 99999);
-    }
     /**
      * @Route("/{id}", name="get_profile",methods={"GET"})
      */

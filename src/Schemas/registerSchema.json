@@ -23,6 +23,16 @@
                 "female"
             ]
         },
+        "tag": {
+            "type": "string",
+            "maxLength": 50,
+            "pattern": "@[a-zA-Z0-9]{4,49}"
+        },
+        "bio": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1
+        },
         "surname": {
             "type": "string",
             "maxLength": 100
@@ -38,7 +48,8 @@
         "name",
         "surname",
         "date_of_birth",
-        "gender"
+        "gender",
+        "tag"
     ],
     "additionalProperties": false
 }

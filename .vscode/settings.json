@@ -1,0 +1,31 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3306,
+            "askForPassword": true,
+            "driver": "MariaDB",
+            "name": "voc_testing",
+            "database": "voc_testing",
+            "username": "root",
+            "connectionTimeout": 200
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3306,
+            "driver": "MariaDB",
+            "name": "Faceprism",
+            "database": "Faceprism",
+            "username": "root",
+            "password": "nilf7sh6eim"
+        }
+    ]
+}

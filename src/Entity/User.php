@@ -84,7 +84,7 @@ class User implements UserInterface
     private $us_bio;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=50)
      */
     private $us_tag;
 
@@ -100,6 +100,9 @@ class User implements UserInterface
             $this->setVerified(false);
             $this->setProfilePicUrl("https://res.cloudinary.com/faceprism/image/upload/v1626432519/profile_pics/default_bbdyw0.png");
             $this->setTag($data["tag"]);
+            if (isset($data["bio"])) {
+                $this->setBio($data["bio"]);
+            }
         }
         $this->us_posts = new ArrayCollection();
     }

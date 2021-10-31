@@ -68,26 +68,21 @@ class AuthController extends AbstractController
         $requestData = $this->jsonDecoder->decode($request);
         $this->validator->validateSchema('/../Schemas/registerSchema.json', (object)$requestData);
         if (!$this->em->getRepository(User::class)->findOneBy(["us_email" => $requestData['email']])) {
-            $isInDatabase = true;
-            do {
-                $tag = $this->profileController->generateTag($requestData["name"], $requestData["surname"]);
-                if (!$this->em->getRepository(User::class)->findOneBy(["us_tag" => $tag])) {
-                    $requestData["tag"] = $tag;
-                    $isInDatabase = false;
-                }
-            } while ($isInDatabase);
-            $user = new User($requestData);
-            $user->setPassword($this->passEnc->encodePassword($user, $requestData["password"]));
-            $this->em->persist($user);
-            $this->em->flush();
-            $resData = $this->serializer->serialize($user, "json", ['ignored_attributes' => ['posts', "transitions", "timezone"]]);
-            $event = $this->eventDispatcher->dispatch(new UserCreateEvent($user, JsonResponse::fromJsonString($resData, 201)), UserCreateEvent::NAME);
-            return $event->getResponse();
+            if (!$this->em->getRepository(User::class)->findOneBy(["us_tag" => $requestData['tag']])) {
+                $user = new User($requestData);
+                $user->setPassword($this->passEnc->encodePassword($user, $requestData["password"]));
+                $this->em->persist($user);
+                $this->em->flush();
+                $responseData = $this->serializer->serialize($user, "json", ['ignored_attributes' => ['posts', "transitions", "timezone"]]);
+                $event = $this->eventDispatcher->dispatch(new UserCreateEvent($user, JsonResponse::fromJsonString($responseData, 201)), UserCreateEvent::NAME);
+                return $event->getResponse();
+            } else {
+                throw new ErrorException("user with this tag exist!", 400);
+            }
         } else {
             throw new ErrorException("user with this email exist!", 400);
         }
     }
-    //TODO: tests for create()
 
     /**
      * @Route("/account", name="auth_remove_account", methods={"DELETE"})
@@ -109,38 +104,24 @@ class AuthController extends AbstractController
      */
     public function updateAccount(Request $request): JsonResponse
     {
-        $reqData = [];
         $payload = $request->attributes->get("payload");
-        if ($content = $request->getContent()) {
-            $reqData = json_decode($content, true);
+        $requestData = $this->jsonDecoder->decode($request);
+        $this->validator->validateSchema('/../Schemas/editAccountDataSchema.json', (object)$requestData);
+        $user = $this->em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
+        if (!$user) {
+            return new JsonResponse(["error" => "User with this id does not exist!"], 404);
         }
-        $result = $this->schemaValidator->validateSchema('/../Schemas/editAccountDataSchema.json', (object)$reqData);
-        if ($result === true) {
-            $em = $this->getDoctrine()->getManager();
-            $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
-            if (!$user) {
-                return new JsonResponse(["error" => "User with this id does not exist!"], 404);
-            }
-            foreach ($reqData as $key => $value) {
-                switch ($key) {
-                    case "name":
-                        $user->setName($value);
-                        break;
-                    case "surname":
-                        $user->setSurname($value);
-                        break;
-                    case "date_of_birth":
-                        $user->setDateOfBirth($value);
-                        break;
-                    case "gender":
-                        $user->setGender($value);
-                        break;
-                }
-            }
-            $em->persist($user);
-            $em->flush();
-            return new JsonResponse(["message" => "Account data has been modified"], 201);
+        foreach ($requestData as $key => $value) {
+            match ($key) {
+                "name" => $user->setName($value),
+                "surname" => $user->setSurname($value),
+                "date_of_birth" => $user->setDateOfBirth($value),
+                "gender" => $user->setGender($value)
+            };
         }
+        $this->em->persist($user);
+        $this->em->flush();
+        return new JsonResponse(["message" => "Account data has been modified"], 201);
     }
     /**
      * @Route("/logout", name="auth_logout", methods={"POST"})

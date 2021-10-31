@@ -3,22 +3,25 @@
     "type": "object",
     "minProperties": 1,
     "properties": {
-        "name":{
+        "name": {
             "type": "string",
             "maxLength": 30
         },
-        "surname":{
+        "surname": {
             "type": "string",
             "maxLength": 100
         },
-        "date_of_birth":{
+        "date_of_birth": {
             "type": "string",
             "minLength": 10,
             "maxLength": 10
         },
-        "gender":{
-            "type":"string",
-            "maxLength": 20
+        "gender": {
+            "type": "string",
+            "enum": [
+                "male",
+                "female"
+            ]
         }
     },
     "additionalProperties": false

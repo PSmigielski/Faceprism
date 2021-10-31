@@ -82,7 +82,8 @@ class AuthControllerTest extends ApiTestCase
             "name" => "jan",
             "surname" =>  "dumas",
             "date_of_birth" =>  "2002-11-20",
-            "gender" => "male"
+            "gender" => "male",
+            "tag" => "@jandumas",
         ];
         $client = self::createClient();
         $client->request("POST", "http://localhost:8000/v1/api/auth/register", [
@@ -104,6 +105,7 @@ class AuthControllerTest extends ApiTestCase
             "name" => "jan",
             "surname" =>  "dumas",
             "date_of_birth" =>  "2002-11-20",
+            "gender" => "male",
         ];
         $errorResponses = [
             "email is missing",
@@ -111,7 +113,8 @@ class AuthControllerTest extends ApiTestCase
             "name is missing",
             "surname is missing",
             "date of birth is missing",
-            "gender is missing"
+            "gender is missing",
+            "tag is missing"
         ];
         $client = self::createClient();
         for ($i = 0; $i < 6; $i++) {
@@ -155,6 +158,13 @@ class AuthControllerTest extends ApiTestCase
             ],
             "gender" => [
                 "adasdasd"
+            ],
+            "tag" => [
+                "@####@#!!#",
+                "@123456789012345678901234567890123456789012345678900000"
+            ],
+            "bio" => [
+                "1231231230123123123012312312301231231230123123123012312312301231231230123123123012312312301231231230123123123012312312301231231230123123123012312312301231231230123123123012312312301231231230123123123012312312301231231230123123123012312312301231231230123123123012312312301231231230",
             ]
         ];
         $errorResponses = [
@@ -181,6 +191,13 @@ class AuthControllerTest extends ApiTestCase
             ],
             "gender" => [
                 "expected male or female"
+            ],
+            "tag" => [
+                "invalid tag given",
+                "tag is too long"
+            ],
+            "bio" => [
+                "bio is too long"
             ]
         ];
         $client = self::createClient();
@@ -193,7 +210,8 @@ class AuthControllerTest extends ApiTestCase
                         "name" => "jan",
                         "surname" =>  "dumas",
                         "date_of_birth" =>  "2002-11-20",
-                        "gender" => "male"
+                        "gender" => "male",
+                        "tag" => "@jandumas"
                     ];
                     $data[$key] = $value;
                     $client->request("POST", "http://localhost:8000/v1/api/auth/register", [
