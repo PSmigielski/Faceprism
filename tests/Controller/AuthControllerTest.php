@@ -262,4 +262,41 @@ class AuthControllerTest extends ApiTestCase
         $this->assertBrowserNotHasCookie("REFRESH_TOKEN");
         $this->assertResponseStatusCodeSame(401);
     }
+    public function testCanLogout(): void
+    {
+        $client = self::createClient();
+        $data = [
+            "email" => "adsa@gmail.com",
+            "password" => "StrongPassword"
+        ];
+        $client->request("POST", "http://localhost:8000/v1/api/auth/login", [
+            'headers' => ['Content-Type' => 'application/json'],
+            'json' => $data,
+        ]);
+        $headers = $client->getResponse()->getHeaders();
+        $client->request("POST", "http://localhost:8000/v1/api/auth/logout", [
+            'headers' => ['Content-Type' => 'application/json', "set-cookie" => $headers["set-cookie"]],
+        ]);
+        $data = $client->getResponse()->getContent();
+        $data = json_decode($data, true);
+        $this->assertArrayHasKey("message", $data);
+        $this->assertBrowserNotHasCookie("BEARER");
+        $this->assertBrowserNotHasCookie("REFRESH_TOKEN");
+        $this->assertEquals("successfully logged out", $data["message"]);
+        $this->assertResponseStatusCodeSame(200);
+    }
+    public function testCannotLogoutWithoutCookies(): void
+    {
+        $client = self::createClient();
+        $client->request("POST", "http://localhost:8000/v1/api/auth/logout", [
+            'headers' => ['Content-Type' => 'application/json']
+        ]);
+        $data = $client->getResponse()->getContent(false);
+        $data = json_decode($data, true);
+        $this->assertArrayHasKey("error", $data);
+        $this->assertBrowserNotHasCookie("BEARER");
+        $this->assertBrowserNotHasCookie("REFRESH_TOKEN");
+        $this->assertEquals("JWT Token not found", $data["error"]);
+        $this->assertResponseStatusCodeSame(401);
+    }
 }

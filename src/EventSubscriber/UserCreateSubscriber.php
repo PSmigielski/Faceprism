@@ -7,11 +7,7 @@ use App\Event\UserCreateEvent;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-use Symfony\Component\Serializer\Serializer;
 
 class UserCreateSubscriber implements EventSubscriberInterface
 {
@@ -22,18 +18,18 @@ class UserCreateSubscriber implements EventSubscriberInterface
     {
         $this->entityManager = $entityManager;
         $this->mailer = $mailer;
-    }    
+    }
     public function onUserCreate(UserCreateEvent $event)
     {
         $verifyEmailController = new VerifyEmailController();
         $user = $event->getUser();
         $verReq = $verifyEmailController->add($this->entityManager, $user);
         $isMailSent = $verifyEmailController->sendMail($this->mailer, $user->getEmail(), $verReq->getId());
-        if($isMailSent){
+        if ($isMailSent) {
             $event->setResponse(new JsonResponse([
                 "message" => "Your account has been created successfully!",
                 "isMailSent" => $isMailSent
-            ],201));
+            ], 201));
         } else {
             $this->entityManager->remove($user);
             $this->entityManager->remove($verReq);

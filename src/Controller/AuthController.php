@@ -31,7 +31,6 @@ class AuthController extends AbstractController
     private ValidatorService $validator;
     private UserPasswordEncoderInterface $passEnc;
     private JWTEncoderInterface $JWTEncoderInterface;
-    private ProfileController $profileController;
     private JsonDecoder $jsonDecoder;
     private EntityManagerInterface $em;
     private Serializer $serializer;
@@ -48,7 +47,6 @@ class AuthController extends AbstractController
         $this->validator = $validator;
         $this->passEnc = $passEnc;
         $this->JWTEncoderInterface = $JWTEncoderInterface;
-        $this->profileController = $profileController;
         $this->jsonDecoder = $jsonDecoder;
         $this->em = $em;
         $this->serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
