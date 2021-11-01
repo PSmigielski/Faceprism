@@ -36,7 +36,6 @@ class AuthController extends AbstractController
     private Serializer $serializer;
     public function __construct(
         JsonDecoder $jsonDecoder,
-        ProfileController $profileController,
         JWTEncoderInterface $JWTEncoderInterface,
         EventDispatcherInterface $eventDispatcher,
         ValidatorService $validator,
@@ -97,30 +96,7 @@ class AuthController extends AbstractController
         $em->flush();
         return new JsonResponse(["message" => "User has been deleted"], 202);
     }
-    /**
-     * @Route("/account", name="auth_update_account", methods={"PUT"})
-     */
-    public function updateAccount(Request $request): JsonResponse
-    {
-        $payload = $request->attributes->get("payload");
-        $requestData = $this->jsonDecoder->decode($request);
-        $this->validator->validateSchema('/../Schemas/editAccountDataSchema.json', (object)$requestData);
-        $user = $this->em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
-        if (!$user) {
-            return new JsonResponse(["error" => "User with this id does not exist!"], 404);
-        }
-        foreach ($requestData as $key => $value) {
-            match ($key) {
-                "name" => $user->setName($value),
-                "surname" => $user->setSurname($value),
-                "date_of_birth" => $user->setDateOfBirth($value),
-                "gender" => $user->setGender($value)
-            };
-        }
-        $this->em->persist($user);
-        $this->em->flush();
-        return new JsonResponse(["message" => "Account data has been modified"], 201);
-    }
+
     /**
      * @Route("/logout", name="auth_logout", methods={"POST"})
      */

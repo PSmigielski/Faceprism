@@ -4,8 +4,11 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Service\ImageUploader;
+use App\Service\JsonDecoder;
 use App\Service\ValidatorService;
 use App\Service\UUIDService;
+use Doctrine\ORM\EntityManagerInterface;
+use ErrorException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,6 +22,21 @@ use Symfony\Component\Serializer\Serializer;
  */
 class ProfileController extends AbstractController
 {
+    private ValidatorService $validator;
+    private JsonDecoder $jsonDecoder;
+    private EntityManagerInterface $em;
+    private Serializer $serializer;
+    public function __construct(
+        JsonDecoder $jsonDecoder,
+        ValidatorService $validator,
+        EntityManagerInterface $em
+    ) {
+        $this->validator = $validator;
+        $this->jsonDecoder = $jsonDecoder;
+        $this->em = $em;
+        $this->serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+    }
+
     /**
      * @Route("/{id}", name="get_profile",methods={"GET"})
      */
@@ -101,34 +119,42 @@ class ProfileController extends AbstractController
             }
         }
     }
-    /**
-     * @Route("/tag/{newTag}", name="change_tag",methods={"PUT"})
-     */
-    public function updateTag(Request $request, string $newTag): JsonResponse
+    private function checkTag(User $user, string $tag)
     {
-        $payload = $request->attributes->get("payload");
-        $em = $this->getDoctrine()->getManager();
-        $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
-        if (is_null($user)) {
-            return new JsonResponse(["error" => "user with this id does not exist!"], 404);
+        $tmp = $this->em->getRepository(User::class)->findOneBy(["us_tag" => $tag]);
+        if (is_null($tmp)) {
+            $user->setTag($tag);
         } else {
-            if (preg_match("/^[a-zA-Z0-9_]{3,15}$/", $newTag) === 1) {
-                $tmp = $em->getRepository(User::class)->findBy(["us_tag" => "@" . $newTag]);
-                if (empty($tmp)) {
-                    $user->setTag("@" . $newTag);
-                    $em->persist($user);
-                    $em->flush();
-                    return new JsonResponse(["message" => "user tag has been changed!", "tag" => $user->getTag()], 200);
-                } else {
-                    if ($tmp[0]->getTag() == $user->getTag()) {
-                        return new JsonResponse(["message" => "You have this tag already"], 400);
-                    } else {
-                        return new JsonResponse(["message" => "This tag is occupied"], 400);
-                    }
-                }
+            if ($tmp->getTag() === $user->getTag() && $tmp->getId() === $user->getId()) {
+                throw new ErrorException("You have this tag already", 400);
             } else {
-                return new JsonResponse(["error" => "Illegal characters used in this tag"], 404);
+                throw new ErrorException("This tag is occupied", 400);
             }
         }
+    }
+    /**
+     * @Route("/account", name="update_account", methods={"PUT"})
+     */
+    public function updateAccount(Request $request): JsonResponse
+    {
+        $payload = $request->attributes->get("payload");
+        $requestData = $this->jsonDecoder->decode($request);
+        $this->validator->validateSchema('/../Schemas/editAccountDataSchema.json', (object)$requestData);
+        $user = $this->em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
+        if (!$user) {
+            return new ErrorException("User with this id does not exist!", 404);
+        }
+        foreach ($requestData as $key => $value) {
+            match ($key) {
+                "name" => $user->setName($value),
+                "surname" => $user->setSurname($value),
+                "date_of_birth" => $user->setDateOfBirth($value),
+                "gender" => $user->setGender($value),
+                "tag" => $this->checkTag($user, $value)
+            };
+        }
+        $this->em->persist($user);
+        $this->em->flush();
+        return new JsonResponse(["message" => "Account data has been modified"], 201);
     }
 }
