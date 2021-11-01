@@ -96,27 +96,19 @@ class ProfileController extends AbstractController
     /**
      * @Route("/bio", name="change_bio",methods={"PUT"})
      */
-    public function updateBio(Request $req, ValidatorService $ValidatorService): JsonResponse
+    public function updateBio(Request $request): JsonResponse
     {
-        $payload = $req->attributes->get("payload");
-        $em = $this->getDoctrine()->getManager();
-        $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
+        $payload = $request->attributes->get("payload");
+        $user = $this->em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
         if (is_null($user)) {
-            return new JsonResponse(["error" => "user with this id does not exist!"], 404);
+            throw new ErrorException("user with this id does not exist!", 404);
         } else {
-            $reqData = [];
-            if ($content = $req->getContent()) {
-                $reqData = json_decode($content, true);
-            }
-            $result = $ValidatorService->validateSchema('/../Schemas/profileUpdateBioSchema.json', (object)$reqData);
-            if ($result === true) {
-                $user->setBio($reqData["bio"]);
-                $em->persist($user);
-                $em->flush();
-                return new JsonResponse(["message" => "bio has been updated", "bio" => $user->getBio()], 201);
-            } else {
-                return $result;
-            }
+            $requestData = $this->jsonDecoder->decode($request);
+            $this->validator->validateSchema('/../Schemas/profileUpdateBioSchema.json', (object)$requestData);
+            $user->setBio($requestData["bio"]);
+            $this->em->persist($user);
+            $this->em->flush();
+            return new JsonResponse(["message" => "bio has been updated", "bio" => $user->getBio()], 201);
         }
     }
     private function checkTag(User $user, string $tag)
