@@ -9,7 +9,7 @@ use App\Repository\PageRepository;
 use App\Service\ImageUploader;
 use App\Service\ValidatorService;
 use App\Service\UUIDService;
-use PaginationService;
+use App\Service\PaginationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;

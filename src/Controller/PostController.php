@@ -20,9 +20,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 use App\Service\ImageUploader;
 use App\Service\ValidatorService;
 use App\Service\UUIDService;
-use Opis\JsonSchema\MediaTypes\Json;
-use PaginationService;
-use PDO;
+use App\Service\PaginationService;
 
 /**
  * @Route("/v1/api/posts", defaults={"_is_api": true}, requirements={"id"="[0-9a-f]{32}"})

@@ -7,7 +7,7 @@ use App\Entity\PageModeration;
 use App\Entity\User;
 use App\Repository\PageModerationRepository;
 use App\Service\UUIDService;
-use PaginationService;
+use App\Service\PaginationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;

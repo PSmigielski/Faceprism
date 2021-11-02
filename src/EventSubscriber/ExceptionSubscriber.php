@@ -10,6 +10,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
 {
     public static function setErrorResponse(ExceptionEvent $event)
     {
+        dump($event);
         if ($event->getThrowable()?->getCode()) {
             $code = $event->getThrowable()->getCode();
         } else if ($event->getThrowable()?->getCode() === 0) {

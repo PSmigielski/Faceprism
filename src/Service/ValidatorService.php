@@ -7,6 +7,7 @@ use Opis\JsonSchema\{
     Validator,
     Schema
 };
+use Symfony\Component\HttpFoundation\Request;
 
 class ValidatorService
 {
@@ -17,6 +18,16 @@ class ValidatorService
         $result = $validator->schemaValidation($data, $schema);
         if (!$result->isValid()) {
             return $this->getErrorMessage($result);
+        }
+    }
+    public function validateImage(Request $request, string $key)
+    {
+        if (is_null($request->files->get($key))) {
+            throw new ErrorException("Image not found", 404);
+        } else {
+            if (strpos($request->files->get("image")->getMimeType(), 'image') === false) {
+                throw new ErrorException("Wrong file format", 415);
+            }
         }
     }
     public function validateFormData(array $data)

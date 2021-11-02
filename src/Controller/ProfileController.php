@@ -26,14 +26,17 @@ class ProfileController extends AbstractController
     private JsonDecoder $jsonDecoder;
     private EntityManagerInterface $em;
     private Serializer $serializer;
+    private ImageUploader $imageUploader;
     public function __construct(
         JsonDecoder $jsonDecoder,
         ValidatorService $validator,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        ImageUploader $imageUploader
     ) {
         $this->validator = $validator;
         $this->jsonDecoder = $jsonDecoder;
         $this->em = $em;
+        $this->imageUploader = $imageUploader;
         $this->serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
     }
 
@@ -42,55 +45,35 @@ class ProfileController extends AbstractController
      */
     public function show(string $id): JsonResponse
     {
-        $em = $this->getDoctrine()->getManager();
-        $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($id));
+        $user = $this->em->getRepository(User::class)->find(UUIDService::encodeUUID($id));
         if (is_null($user)) {
             return new JsonResponse(["error" => "user with this id does not exist!"], 404);
         } else {
-            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($user, "json", ['ignored_attributes' => ['posts', "transitions", "timezone", "roles", "email", "verified", "username", "password", "salt", "post", "user", "id"]]);
-            return JsonResponse::fromJsonString($resData, 200);
+            $responseData = $this->serializer->serialize($user, "json", ['ignored_attributes' => ['posts', "transitions", "timezone", "roles", "email", "verified", "username", "password", "salt", "post", "user", "id"]]);
+            return JsonResponse::fromJsonString($responseData, 200);
         }
     }
     /**
      * @Route("/{imageType}", name="change_image",methods={"POST"})
      */
-    public function updateProfilePic(Request $req, ImageUploader $imageUploader, string $imageType): JsonResponse
+    public function updateProfilePic(Request $request, string $imageType): JsonResponse
     {
-        $em = $this->getDoctrine()->getManager();
-        $payload = $req->attributes->get("payload");
-        $user = $em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
+        $payload = $request->attributes->get("payload");
+        $user = $this->em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
         if (is_null($user)) {
-            return new JsonResponse(["error" => "user with this id does not exist!"], 404);
+            throw new ErrorException("user with this id does not exist!", 404);
         } else {
-            $width = $imageType == "banner" ? 820 : 200;
-            $height = $imageType == "banner" ? 312 : 200;
-            if (!is_null($req->files->get("image"))) {
-                if (strpos($req->files->get("image")->getMimeType(), 'image') !== false) {
-                    switch ($imageType) {
-                        case "banner":
-                            $user->setBannerUrl($imageUploader->uploadFileToCloudinary($req->files->get("image"), $width, $height, $imageType));
-                            break;
-                        case "profile_pic":
-                            $user->setProfilePicUrl($imageUploader->uploadFileToCloudinary($req->files->get("image"), $width, $height, $imageType));
-                            break;
-                    }
-                    $em->persist($user);
-                    $em->flush();
-                    switch ($imageType) {
-                        case "banner":
-                            return new JsonResponse(["message" => $imageType . " has been updated", "banner" => $user->getBannerUrl()], 201);
-                            break;
-                        case "profile_pic":
-                            return new JsonResponse(["message" => $imageType . " has been updated", "profile_pic" => $user->getProfilePicUrl()], 201);
-                            break;
-                    }
-                } else {
-                    return new JsonResponse(["error" => "Wrong file format"], 415);
-                }
-            } else {
-                return new JsonResponse(["error" => "Image not found"], 404);
-            }
+            $this->validator->validateImage($request, "image");
+            match ($imageType) {
+                "banner" => $user->setBannerUrl($this->imageUploader->uploadFileToCloudinary($request->files->get("image"), $imageType)),
+                "profile_pic" => $user->setProfilePicUrl($this->imageUploader->uploadFileToCloudinary($request->files->get("image"), $imageType))
+            };
+            $this->em->persist($user);
+            $this->em->flush();
+            return match ($imageType) {
+                "banner" => new JsonResponse(["message" => "banner has been updated", "banner" => $user->getBannerUrl()], 201),
+                "profile_pic" => new JsonResponse(["message" => "profile_pic has been updated", "profile_pic" => $user->getProfilePicUrl()], 201)
+            };
         }
     }
     /**
@@ -134,7 +117,7 @@ class ProfileController extends AbstractController
         $this->validator->validateSchema('/../Schemas/editAccountDataSchema.json', (object)$requestData);
         $user = $this->em->getRepository(User::class)->find(UUIDService::encodeUUID($payload["user_id"]));
         if (!$user) {
-            return new ErrorException("User with this id does not exist!", 404);
+            throw new ErrorException("User with this id does not exist!", 404);
         }
         foreach ($requestData as $key => $value) {
             match ($key) {
