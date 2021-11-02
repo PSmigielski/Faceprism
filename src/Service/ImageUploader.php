@@ -24,32 +24,26 @@ class ImageUploader
         ]);
 
         $fileName = $file->getRealPath();
-        switch ($type) {
-            case "profile_pic":
-                $config = [
-                    "width" => $this::$PROFILE_PIC_SIZE["width"],
-                    "height" => $this::$PROFILE_PIC_SIZE["height"],
-                    "crop" => "fill",
-                    "folder" => "profile_pics",
-                    "gravity" => "face"
-                ];
-                break;
-            case "banner":
-                $config = [
-                    "width" => $this::$BANNER_SIZE["width"],
-                    "height" => $this::$BANNER_SIZE["height"],
-                    "crop" => "fill",
-                    "folder" => "banners",
-                    "gravity" => "face"
-                ];
-                break;
-            case "default":
-                $config = [
-                    "folder" => "post_files",
-                    "resource_type" => "auto"
-                ];
-                break;
-        }
+        $config = match ($type) {
+            "profile_pic" => [
+                "width" => $this::$PROFILE_PIC_SIZE["width"],
+                "height" => $this::$PROFILE_PIC_SIZE["height"],
+                "crop" => "fill",
+                "folder" => "profile_pics",
+                "gravity" => "face"
+            ],
+            "banner" => [
+                "width" => $this::$BANNER_SIZE["width"],
+                "height" => $this::$BANNER_SIZE["height"],
+                "crop" => "fill",
+                "folder" => "banners",
+                "gravity" => "face"
+            ],
+            "default" =>  [
+                "folder" => "post_files",
+                "resource_type" => "auto"
+            ],
+        };
         $imageUploaded = (new UploadApi($cloudinary))->upload($fileName, $config);
         return $imageUploaded['secure_url'];
     }
