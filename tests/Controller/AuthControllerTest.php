@@ -112,7 +112,7 @@ class AuthControllerTest extends ApiTestCase
             "password is missing",
             "name is missing",
             "surname is missing",
-            "date of birth is missing",
+            "date_of_birth is missing",
             "gender is missing",
             "tag is missing"
         ];
@@ -187,7 +187,7 @@ class AuthControllerTest extends ApiTestCase
                 "surname has invalid type"
             ],
             "date_of_birth" => [
-                "invalid date format YYYY-MM-DD required"
+                "invalid date_of_birth format"
             ],
             "gender" => [
                 "expected male or female"

@@ -84,111 +84,26 @@ class ValidatorService
     {
         switch ($result->getFirstError()->keyword()) {
             case "pattern":
-                switch ($result->getFirstError()->dataPointer()[0]) {
-                    case "tag":
-                        throw new ErrorException("invalid tag given", 400);
-                        break;
-                }
+                throw new ErrorException("invalid " . $result->getFirstError()->dataPointer()[0] . " given", 400);
+                break;
             case "enum":
                 throw new ErrorException("expected male or female", 400);
                 break;
             case "format":
-                switch ($result->getFirstError()->dataPointer()[0]) {
-                    case "email":
-                        throw new ErrorException("invalid email format", 400);
-                        break;
-                    case "date_of_birth":
-                        throw new ErrorException("invalid date format YYYY-MM-DD required", 400);
-                        break;
-                }
+                throw new ErrorException("invalid " . $result->getFirstError()->dataPointer()[0] . " format", 400);
                 break;
             case "type":
-                switch ($result->getFirstError()->dataPointer()[0]) {
-                    case "text":
-                        throw new ErrorException("text has invalid type", 400);
-                        break;
-                    case "password":
-                        throw new ErrorException("password has invalid type", 400);
-                        break;
-                    case "date_of_birth":
-                        throw new ErrorException("date has invalid types wrong format", 400);
-                        break;
-                    case "email":
-                        throw new ErrorException("email has invalid type", 400);
-                        break;
-                    case "name":
-                        throw new ErrorException("name has invalid type", 400);
-                        break;
-                    case "surname":
-                        throw new ErrorException("surname has invalid type", 400);
-                        break;
-                    case "img":
-                        throw new ErrorException("image has invalid type", 400);
-                        break;
-                }
+                throw new ErrorException($result->getFirstError()->dataPointer()[0] . " has invalid type", 400);
                 break;
             case "maxLength":
-                switch ($result->getFirstError()->dataPointer()[0]) {
-                    case "text":
-                        throw new ErrorException("text is too long", 400);
-                        break;
-                    case "password":
-                        throw new ErrorException("password is too long", 400);
-                        break;
-                    case "email":
-                        throw new ErrorException("email is too long", 400);
-                        break;
-                    case "name":
-                        throw new ErrorException("name is too long", 400);
-                        break;
-                    case "surname":
-                        throw new ErrorException("surname is too long", 400);
-                        break;
-                    case "tag":
-                        throw new ErrorException("tag is too long", 400);
-                        break;
-                    case "bio":
-                        throw new ErrorException("bio is too long", 400);
-                        break;
-                }
+                throw new ErrorException($result->getFirstError()->dataPointer()[0] . " is too long", 400);
+                break;
                 break;
             case "minLength":
-                switch ($result->getFirstError()->dataPointer()[0]) {
-                    case "password":
-                        throw new ErrorException("password is too short", 400);
-                        break;
-                    case "bio":
-                        throw new ErrorException("bio is too short", 400);
-                        break;
-                }
+                throw new ErrorException($result->getFirstError()->dataPointer()[0] . " is too short", 400);
                 break;
             case "required":
-                switch ($result->getFirstError()->keywordArgs()["missing"]) {
-                    case "password":
-                        throw new ErrorException("password is missing", 400);
-                        break;
-                    case "date_of_birth":
-                        throw new ErrorException("date of birth is missing", 400);
-                        break;
-                    case "email":
-                        throw new ErrorException("email is missing", 400);
-                        break;
-                    case "name":
-                        throw new ErrorException("name is missing", 400);
-                        break;
-                    case "surname":
-                        throw new ErrorException("surname is missing", 400);
-                        break;
-                    case "text":
-                        throw new ErrorException("text is missing", 400);
-                        break;
-                    case "gender":
-                        throw new ErrorException("gender is missing", 400);
-                        break;
-                    case "tag":
-                        throw new ErrorException("tag is missing", 400);
-                        break;
-                }
+                throw new ErrorException($result->getFirstError()->keywordArgs()["missing"] . " is missing", 400);
                 break;
             case "minProperties":
                 throw new ErrorException("given properties: " . $result->getFirstError()->keywordArgs()["count"] . "; minimum quantity of properties: " . $result->getFirstError()->keywordArgs()["min"], 400);
