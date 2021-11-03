@@ -26,7 +26,7 @@ class PostRepository extends ServiceEntityRepository
     }
     public function createFindAllPostsForUser(string $userID): QueryBuilder
     {
-        return $this->createQueryBuilder("p")->where("p.po_author = :id")->andWhere("p.po_page_id IS NULL")->orderBy('p.po_created_at', "DESC")->setParameter("id", $userID);
+        return $this->createQueryBuilder("p")->where("p.po_author = :id")->andWhere("p.po_page IS NULL")->orderBy('p.po_created_at', "DESC")->setParameter("id", $userID);
     }
     public function createFindAllPostsForPage(string $pageID): QueryBuilder
     {
