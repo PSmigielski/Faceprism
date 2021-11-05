@@ -26,15 +26,15 @@ class ImageUploader
         $fileName = $file->getRealPath();
         $config = match ($type) {
             "profile_pic" => [
-                "width" => $this::$PROFILE_PIC_SIZE["width"],
-                "height" => $this::$PROFILE_PIC_SIZE["height"],
+                "width" => self::$PROFILE_PIC_SIZE["width"],
+                "height" => self::$PROFILE_PIC_SIZE["height"],
                 "crop" => "fill",
                 "folder" => "profile_pics",
                 "gravity" => "face"
             ],
             "banner" => [
-                "width" => $this::$BANNER_SIZE["width"],
-                "height" => $this::$BANNER_SIZE["height"],
+                "width" => self::$BANNER_SIZE["width"],
+                "height" => self::$BANNER_SIZE["height"],
                 "crop" => "fill",
                 "folder" => "banners",
                 "gravity" => "face"
