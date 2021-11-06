@@ -3,15 +3,14 @@
 namespace App\Service;
 
 use Doctrine\ORM\QueryBuilder;
+use ErrorException;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
 use Pagerfanta\Pagerfanta;
-use Symfony\Component\HttpFoundation\JsonResponse;
-
 
 class PaginationService
 {
-    static public function paginate(int $page, QueryBuilder $qb, string $arrayName): array | JsonResponse
+    static public function paginate(int $page, QueryBuilder $qb, string $arrayName): array
     {
         try {
             $adapter = new QueryAdapter($qb);
@@ -29,7 +28,7 @@ class PaginationService
                 $arrayName => $data
             ];
         } catch (OutOfRangeCurrentPageException $e) {
-            return new JsonResponse(["message" => "Page not found"], 404);
+            throw new ErrorException("Page not found", 404);
         }
     }
 }

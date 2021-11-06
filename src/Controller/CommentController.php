@@ -24,29 +24,26 @@ use Symfony\Component\Serializer\SerializerInterface;
  */
 class CommentController extends AbstractController
 {
+    private SerializerInterface $serializer;
+    private CommentRepository $commentRepository;
+    public function __construct(CommentRepository $commentRepository)
+    {
+        $this->commentRepository = $commentRepository;
+        $this->serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+    }
     /**
      * @Route("/{postId}", name="get_comments", methods={"GET"})
      */
-    public function index(CommentRepository $repo, Request $request, SerializerInterface $serializer, string $postId): JsonResponse
+    public function index(Request $request, string $postId): JsonResponse
     {
         $page = $request->query->get('page', 1);
-        $qb = $repo->findAllComments(UUIDService::encodeUUID($postId));
+        $qb = $this->commentRepository->findAllComments(UUIDService::encodeUUID($postId));
         $data = PaginationService::paginate($page, $qb, "comments");
-        if (gettype($data) == "array") {
-            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $resData = $serializer->serialize($data, "json", ['ignored_attributes' => ['posts', "transitions", "timezone", "password", "email", "username", "roles", "gender", "salt", "post"]]);
-            $tmp = json_decode($resData, true);
-            $tmpComments = [];
-            foreach ($tmp["comments"] as $c) {
-                $c["id"] = UUIDService::decodeUUID($c["id"]);
-                $c["author"]["id"] = UUIDService::decodeUUID($c["author"]["id"]);
-                array_push($tmpComments, $c);
-            }
-            $tmp["comments"] = $tmpComments;
-            return new JsonResponse($tmp, 200);
-        } else {
-            return $data;
-        }
+        $responseData = $this->serializer->serialize($data, "json", ['ignored_attributes' => ['posts', "transitions", "timezone", "password", "email", "username", "roles", "gender", "salt", "post"]]);
+        $decodedData = json_decode($responseData, true);
+        $comments = UUIDService::decodeUUIDsInArray($decodedData["comments"]);
+        $decodedData["comments"] = $comments;
+        return new JsonResponse($decodedData, 200);
     }
     /**
      * @Route("/{postId}", name="create_comment",methods={"POST"})
@@ -59,48 +56,44 @@ class CommentController extends AbstractController
         if ($content = $request->getContent()) {
             $reqData = json_decode($content, true);
         }
-        $result = $ValidatorService->validateSchema('/../Schemas/commentSchema.json', (object)$reqData);
-        if ($result === true) {
-            $comment = new Comment();
-            $author = $this->getDoctrine()->getRepository(User::class)->find(UUIDService::encodeUUID($payload['user_id']));
-            $post = $this->getDoctrine()->getRepository(Post::class)->find(UUIDService::encodeUUID($postId));
-            if (!$author) {
-                return new JsonResponse(["error" => "user with this id does not exist!"], 404);
-            }
-            if (!$post) {
-                return new JsonResponse(["message" => "Post does not exist"], 404);
-            }
-            $comment->setAuthor($author);
-            $comment->setPost($post);
-            $comment->setText($reqData['text']);
-            $comment->setCreatedAt(new DateTime("now"));
-            $comment->setRepliesCount(0);
-            $post->setCommentCount($post->getCommentCount() + 1);
-            $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-            $em = $this->getDoctrine()->getManager();
-            if (!is_null($reply_to)) {
-                $c = $em->getRepository(Comment::class)->find(UUIDService::encodeUUID($reply_to));
-                if (!is_null($c)) {
-                    $comment->setReplyTo($c);
-                    $c->setRepliesCount($c->getRepliesCount() + 1);
-                    $em->persist($c);
-                } else {
-                    return new JsonResponse(["error" => "You can't reply to this comment"]);
-                }
-            }
-            $em->persist($comment);
-            $em->persist($post);
-            $em->flush();
-            $resData = $serializer->serialize($comment, "json", ['ignored_attributes' => ['posts', "transitions", "password", "salt", "dateOfBirth", "roles", "email", "username", "gender", "post", "verified", "bannerUrl", "bio", "timezone"]]);
-            $tmp = json_decode($resData, true);
-            $tmp["id"] = UUIDService::decodeUUID($tmp["id"]);
-            $tmp["author"]["id"] = UUIDService::decodeUUID($tmp["author"]["id"]);
-            $tmp["replyTo"]["author"]["id"] = UUIDService::decodeUUID($tmp["replyTo"]["author"]["id"]);
-            $tmp["replyTo"]["id"] = UUIDService::decodeUUID($tmp["replyTo"]["id"]);
-            return new JsonResponse($tmp, 201);
-        } else {
-            return $result;
+        $ValidatorService->validateSchema('/../Schemas/commentSchema.json', (object)$reqData);
+        $comment = new Comment();
+        $author = $this->getDoctrine()->getRepository(User::class)->find(UUIDService::encodeUUID($payload['user_id']));
+        $post = $this->getDoctrine()->getRepository(Post::class)->find(UUIDService::encodeUUID($postId));
+        if (!$author) {
+            return new JsonResponse(["error" => "user with this id does not exist!"], 404);
         }
+        if (!$post) {
+            return new JsonResponse(["message" => "Post does not exist"], 404);
+        }
+        $comment->setAuthor($author);
+        $comment->setPost($post);
+        $comment->setText($reqData['text']);
+        $comment->setCreatedAt(new DateTime("now"));
+        $comment->setRepliesCount(0);
+        $post->setCommentCount($post->getCommentCount() + 1);
+        $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
+        $em = $this->getDoctrine()->getManager();
+        if (!is_null($reply_to)) {
+            $c = $em->getRepository(Comment::class)->find(UUIDService::encodeUUID($reply_to));
+            if (!is_null($c)) {
+                $comment->setReplyTo($c);
+                $c->setRepliesCount($c->getRepliesCount() + 1);
+                $em->persist($c);
+            } else {
+                return new JsonResponse(["error" => "You can't reply to this comment"]);
+            }
+        }
+        $em->persist($comment);
+        $em->persist($post);
+        $em->flush();
+        $resData = $serializer->serialize($comment, "json", ['ignored_attributes' => ['posts', "transitions", "password", "salt", "dateOfBirth", "roles", "email", "username", "gender", "post", "verified", "bannerUrl", "bio", "timezone"]]);
+        $tmp = json_decode($resData, true);
+        $tmp["id"] = UUIDService::decodeUUID($tmp["id"]);
+        $tmp["author"]["id"] = UUIDService::decodeUUID($tmp["author"]["id"]);
+        $tmp["replyTo"]["author"]["id"] = UUIDService::decodeUUID($tmp["replyTo"]["author"]["id"]);
+        $tmp["replyTo"]["id"] = UUIDService::decodeUUID($tmp["replyTo"]["id"]);
+        return new JsonResponse($tmp, 201);
     }
     /**
      * @Route("/{id}",name="edit_comment",  methods={"PUT"})
